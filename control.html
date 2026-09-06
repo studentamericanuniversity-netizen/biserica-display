@@ -227,6 +227,7 @@ text normal pe o linie..."></textarea>
         <button class="btn-p" style="flex:1;" onclick="projectEditor()">Proiectează</button>
         <button class="btn-d" onclick="blackoutScreen()">Ecran negru</button>
         <button class="btn-m" onclick="backgroundOnly()">Doar fundal</button>
+        <button class="btn-ok" onclick="showHome()">🏠 Ecran start</button>
       </div>
       <div class="small" style="margin-top:8px;">⬆️⬇️⬅️➡️ Săgețile trec la versetul/strofa următoare(anterioară) cât timp nu scrii într-un câmp.</div>
     </div>
@@ -591,7 +592,13 @@ text normal pe o linie..."></textarea>
       if (!id) return alert('Introdu link sau ID YouTube.');
       sendPayload({ kind:'yt', videoId: id });
     }
-    function stopYoutube(){ sendPayload({ kind:'clear' }); }
+    function stopYoutube(){ stopAndHome(); }
+
+    // Opreste orice media si revine la ecranul implicit (imagine + mesaj + ceas)
+    function stopAndHome() {
+      sendPayload({ kind:'clear' });
+      setTimeout(showHome, 180);
+    }
 
     // ---- Căutare YouTube (prin yt-dlp) + control redare ----
     async function ytSearch() {
@@ -618,7 +625,10 @@ text normal pe o linie..."></textarea>
         });
       } catch (e) { console.warn(e); box.innerText = 'Eroare la căutare.'; }
     }
-    function ytTransport(cmd) { sendPayload({ kind:'ytcmd', cmd: cmd }); }
+    function ytTransport(cmd) {
+      if (cmd === 'stop') { stopAndHome(); return; }
+      sendPayload({ kind:'ytcmd', cmd: cmd });
+    }
     function fontAdj(d) { sendPayload({ kind:'font', delta: d * 0.09 }); }
     function quickBgChange() {
       const v = document.getElementById('quickBg').value;
