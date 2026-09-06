@@ -7,212 +7,203 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; }
     body {
-      overflow: hidden;
-      color: #ffffff;
+      overflow: hidden; color: #ffffff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      background: #0b0d12;
-      transition: background 0.4s ease;
+      display: flex; flex-direction: column; background: #0b0d12;
+      transition: background .4s ease;
     }
-    /* ---- Fundaluri neutre ---- */
     body.bg-neutru-inchis { background: radial-gradient(ellipse at 50% 40%, #1c2230 0%, #0b0d12 75%); }
     body.bg-albastru       { background: radial-gradient(ellipse at 50% 40%, #14324d 0%, #071019 75%); }
     body.bg-gri            { background: linear-gradient(160deg, #23272e 0%, #101216 100%); }
     body.bg-imagine {
-      background-image: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.65)), url('https://images.unsplash.com/photo-1519817650390-64a93db51149?q=80&w=1920&auto=format&fit=crop');
+      background-image: linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.65)),url('https://images.unsplash.com/photo-1519817650390-64a93db51149?q=80&w=1920&auto=format&fit=crop');
       background-size: cover; background-position: center;
     }
-    body.bg-negru { background: #000; }
+    body.bg-negru { background:#000; }
+    .blackout { background:#000 !important; }
+    .blackout #rootContent, .blackout #mediaPlayer { display:none !important; }
 
-    .blackout { background: #000000 !important; }
-    .blackout #rootContent { display: none !important; }
+    #rootContent { flex:1; display:flex; flex-direction:column; justify-content:space-between; min-height:0; }
+    .top-header { padding:18px 32px; display:flex; justify-content:flex-end; }
+    #clock { font-size:24px; font-weight:600; color:#e8ecf4; background:rgba(10,12,18,.55); padding:5px 14px; border-radius:8px; }
 
-    #rootContent { flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-height: 0; }
+    .content-area { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;
+      padding:8px 80px 24px; text-align:center; min-height:0; overflow:hidden; }
+    #slideTitle { font-size:44px; font-weight:800; color:#f4c542; margin-bottom:22px; }
+    #slideText { font-size:52px; font-weight:600; line-height:1.45; white-space:pre-line; max-width:94%; text-shadow:0 4px 18px rgba(0,0,0,.9); }
+    #slideText .ch-header { display:block; font-size:.62em; font-weight:800; color:#f4c542; margin:.35em 0 .5em; }
+    #slideText .line { display:block; margin:.16em 0; }
+    #slideText .sub { display:block; margin:.1em 0 .1em 1.6em; font-size:.86em; color:#d7deea; }
+    #slideText .bullet { display:flex; gap:.5em; align-items:flex-start; text-align:left; margin:.22em 0; }
+    #slideText .bullet::before { content:"•"; color:#f4c542; font-weight:900; }
+    #slideText .bullet.sub { margin-left:1.7em; }
+    #slideText .bullet.sub::before { content:"–"; color:#9fb4d6; }
 
-    .top-header { padding: 20px 36px; display: flex; justify-content: flex-end; }
-    #clock {
-      font-size: 24px; font-weight: 600; color: #e8ecf4;
-      background: rgba(10, 12, 18, 0.55); padding: 5px 14px; border-radius: 8px;
-      backdrop-filter: blur(8px);
-    }
+    #footerMessage { padding:8px 40px 22px; text-align:center; font-size:24px; color:#dfe6f2; text-shadow:0 2px 10px rgba(0,0,0,.9); }
+    #footerMessage .verse-ref { display:block; margin-top:4px; font-size:.8em; color:#f4c542; font-weight:700; }
 
-    .content-area {
-      flex: 1; display: flex; flex-direction: column;
-      justify-content: center; align-items: center;
-      padding: 10px 90px 30px 90px; text-align: center;
-      min-height: 0; overflow: hidden;
-      text-shadow: 0 4px 18px rgba(0,0,0,0.9);
-    }
-    #slideTitle { font-size: 44px; font-weight: 800; color: #f4c542; margin-bottom: 26px; letter-spacing: 0.4px; }
-    #slideText {
-      font-size: 52px; font-weight: 600; line-height: 1.4;
-      white-space: pre-line; max-width: 92%;
-    }
-    #slideText.aleft  { text-align: left;   align-self: flex-start; }
-    #slideText.acenter{ text-align: center; align-self: center; }
-    #slideText.aright { text-align: right;  align-self: flex-end; }
-
-    /* titluri interne / anunțuri structurate */
-    #slideText .ch-header { display: block; font-size: 0.62em; font-weight: 800; color: #f4c542; margin: 0.4em 0 0.55em; letter-spacing: 0.3px; }
-    #slideText .line { display: block; margin: 0.18em 0; }
-    #slideText .sub { display: block; margin: 0.12em 0 0.12em 1.6em; font-size: 0.86em; color: #d7deea; }
-    #slideText .bullet { display: flex; gap: 0.55em; align-items: flex-start; text-align: left; margin: 0.28em 0; }
-    #slideText .bullet::before { content: "•"; color: #f4c542; font-weight: 900; }
-    #slideText .bullet.sub { margin-left: 1.8em; }
-    #slideText .bullet.sub::before { content: "–"; color: #9fb4d6; }
-
-    /* moduri speciale: bine ati venit / anunț liniște */
-    #slideText.mode-welcome { font-size: 64px; font-weight: 800; }
-    #slideText.mode-notice  { font-size: 52px; font-weight: 700; }
-    #slideText.mode-welcome .line, #slideText.mode-notice .line { margin: 0.3em 0; }
-
-    #footerMessage {
-      padding: 10px 40px 26px 40px; text-align: center;
-      font-size: 26px; font-weight: 500; color: #dfe6f2;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.9);
-    }
-    #footerMessage .verse-ref { display: block; margin-top: 6px; font-size: 0.78em; color: #f4c542; font-weight: 700; }
-
-    #mediaPlayer { position: fixed; inset: 0; display: none; background: #000; z-index: 20; align-items: center; justify-content: center; }
-    #mediaPlayer.visible { display: flex; }
-    #mediaPlayer iframe, #mediaPlayer img, #mediaPlayer video { width: 100%; height: 100%; border: none; object-fit: contain; }
+    #mediaPlayer { position:fixed; inset:0; display:none; background:#000; z-index:30; }
+    #mediaPlayer.visible { display:block; }
+    #mediaPlayer #ytHolder, #mediaPlayer img, #mediaPlayer video { width:100%; height:100%; border:none; object-fit:contain; }
   </style>
 </head>
 <body id="displayRoot" class="bg-neutru-inchis">
 
   <div id="rootContent">
     <div class="top-header"><div id="clock">00:00:00</div></div>
-
-    <div class="content-area">
-      <div id="slideTitle"></div>
-      <div id="slideText" class="acenter"></div>
-    </div>
-
+    <div class="content-area"><div id="slideTitle"></div><div id="slideText"></div></div>
     <div id="footerMessage"></div>
   </div>
 
-  <div id="mediaPlayer"></div>
+  <div id="mediaPlayer"><div id="ytHolder"></div></div>
 
   <script>
     const { ipcRenderer } = require('electron');
 
+    let fontScale = 1;
+    let curBg = 'bg-neutru-inchis';
+    let ytPlayer = null;
+    let ytApiReady = false;
+    let pendingYtId = null;
+    let mode = 'plain';
+
     setInterval(() => {
-      const now = new Date();
-      document.getElementById('clock').innerText = now.toLocaleTimeString('ro-RO');
+      document.getElementById('clock').innerText = new Date().toLocaleTimeString('ro-RO');
     }, 1000);
 
-    // Construieste textul slide-ului ca elemente DOM sigure (fara HTML injectat)
+    function baseFontSize(m) { return m === 'welcome' ? 66 : (m === 'notice' ? 54 : 50); }
+    function applyTextSize() {
+      const el = document.getElementById('slideText');
+      el.style.fontSize = Math.round(baseFontSize(mode) * fontScale) + 'px';
+    }
+    function setBackground(cls) {
+      curBg = cls || 'bg-neutru-inchis';
+      const root = document.getElementById('displayRoot');
+      root.className = curBg;
+    }
+
+    // ---- Player YouTube (controlabil din panou) ----
+    function ensureYtApi() {
+      return new Promise((resolve) => {
+        if (window.YT && YT.Player) { resolve(); return; }
+        if (document.getElementById('ytapi')) { waitReady(); return; }
+        const tag = document.createElement('script');
+        tag.id = 'ytapi';
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+        function waitReady() {
+          const iv = setInterval(() => {
+            if (window.YT && YT.Player) { clearInterval(iv); ytApiReady = true; resolve(); }
+          }, 200);
+          setTimeout(() => clearInterval(iv), 20000);
+        }
+        waitReady();
+      });
+    }
+    async function playYoutube(id) {
+      await ensureYtApi();
+      const holder = document.getElementById('ytHolder');
+      holder.innerHTML = '';
+      const media = document.getElementById('mediaPlayer');
+      media.classList.add('visible');
+      ytPlayer = new YT.Player('ytHolder', {
+        videoId: id,
+        playerVars: { autoplay: 1, rel: 0, controls: 1, modestbranding: 1, playsinline: 1 },
+        events: {
+          onError: () => { /* ignoram erorile de retea */ }
+        }
+      });
+    }
+    function ytCommand(cmd) {
+      if (!ytPlayer || !ytPlayer.getPlayerState) return;
+      try {
+        if (cmd === 'toggle') {
+          const st = ytPlayer.getPlayerState();
+          if (st === 1) ytPlayer.pauseVideo(); else ytPlayer.playVideo();
+        } else if (cmd === 'stop') {
+          ytPlayer.stopVideo();
+          const media = document.getElementById('mediaPlayer');
+          media.classList.remove('visible');
+        } else if (cmd === 'vol-up') {
+          ytPlayer.setVolume(Math.min(100, (ytPlayer.getVolume() || 50) + 10));
+        } else if (cmd === 'vol-down') {
+          ytPlayer.setVolume(Math.max(0, (ytPlayer.getVolume() || 50) - 10));
+        }
+      } catch (e) { console.warn('ytcmd', e); }
+    }
+
     function buildRichText(container, rawText) {
       container.innerHTML = '';
       const lines = String(rawText || '').split('\n');
-      for (let raw of lines) {
-        const line = raw.replace(/\s+$/,'');
+      for (const raw of lines) {
+        const line = raw.replace(/\s+$/, '');
         if (!line.trim()) continue;
         if (/^###\s+/.test(line)) {
-          const h = document.createElement('span');
-          h.className = 'ch-header';
-          h.innerText = line.replace(/^###\s+/, '').trim();
-          container.appendChild(h);
+          const h = document.createElement('span'); h.className = 'ch-header';
+          h.innerText = line.replace(/^###\s+/, '').trim(); container.appendChild(h);
         } else if (/^\s{2,}-/.test(line) || /^\s{2,}•/.test(line)) {
-          const b = document.createElement('span');
-          b.className = 'bullet sub';
-          b.innerText = line.replace(/^\s+[-•]\s*/, '').trim();
-          container.appendChild(b);
+          const b = document.createElement('span'); b.className = 'bullet sub';
+          b.innerText = line.replace(/^\s+[-•]\s*/, '').trim(); container.appendChild(b);
         } else if (/^[-•]\s+/.test(line)) {
-          const b = document.createElement('span');
-          b.className = 'bullet';
-          b.innerText = line.replace(/^[-•]\s*/, '').trim();
-          container.appendChild(b);
+          const b = document.createElement('span'); b.className = 'bullet';
+          b.innerText = line.replace(/^[-•]\s*/, '').trim(); container.appendChild(b);
         } else {
-          const s = document.createElement('span');
-          s.className = 'line';
-          s.innerText = line;
+          const s = document.createElement('span'); s.className = 'line'; s.innerText = line;
           container.appendChild(s);
         }
       }
     }
 
     ipcRenderer.on('render-slide', (event, data) => {
+      if (!data) return;
       const root = document.getElementById('displayRoot');
-      const content = document.getElementById('rootContent');
-      const mediaBox = document.getElementById('mediaPlayer');
+      const media = document.getElementById('mediaPlayer');
       const titleEl = document.getElementById('slideTitle');
       const textEl = document.getElementById('slideText');
       const footerEl = document.getElementById('footerMessage');
 
-      if (!data) return;
-
-      // Blackout / ecran negru
-      if (data.kind === 'black' || data.blackout) {
-        root.classList.add('blackout');
-        mediaBox.classList.remove('visible');
-        mediaBox.innerHTML = '';
-        return;
-      }
+      if (data.kind === 'black' || data.blackout) { root.classList.add('blackout'); return; }
       root.classList.remove('blackout');
 
-      // Schimbare fundal
-      if (data.kind === 'bg') {
-        const cls = data.bgClass || 'bg-neutru-inchis';
-        root.className = cls + (root.classList.contains('blackout') ? ' blackout' : '');
-        return;
+      if (data.kind === 'bg') { setBackground(data.bgClass); return; }
+      if (data.kind === 'font') {
+        fontScale = Math.max(0.6, Math.min(2.2, fontScale + (data.delta || 0)));
+        applyTextSize(); return;
       }
+      if (data.kind === 'ytcmd') { ytCommand(data.cmd); return; }
 
-      // Redare media YouTube
-      if (data.kind === 'yt' && data.videoId) {
-        mediaBox.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(data.videoId) + '?autoplay=1&controls=0&rel=0&modestbranding=1" allow="autoplay; encrypted-media"></iframe>';
-        mediaBox.classList.add('visible');
-        return;
-      }
+      if (data.kind === 'yt' && data.videoId) { playYoutube(data.videoId); return; }
 
-      // Imagine / harta biblice
       if (data.kind === 'image' && data.image) {
-        mediaBox.innerHTML = '<img src="' + data.image + '" alt="">';
-        mediaBox.classList.add('visible');
-        return;
+        media.innerHTML = '<img src="' + data.image + '" alt="">';
+        media.classList.add('visible'); return;
       }
-
-      // Opreste media
       if (data.kind === 'clear' || data.mediaType === 'none') {
-        mediaBox.classList.remove('visible');
-        mediaBox.innerHTML = '';
+        media.classList.remove('visible');
+        if (ytPlayer) { try { ytPlayer.stopVideo(); } catch(e){} }
+        media.innerHTML = '<div id="ytHolder"></div>';
       }
 
-      // Slide text normal
+      // slide text
       titleEl.innerText = data.title || '';
-      if (data.titleColor) titleEl.style.color = data.titleColor;
-      else titleEl.style.color = '#f4c542';
+      titleEl.style.color = data.titleColor || '#f4c542';
       titleEl.style.display = (data.title || '').trim() ? 'block' : 'none';
 
-      const mode = data.mode || 'plain';
-      textEl.className = 'acenter mode-' + mode;
-      buildRichText(textEl, data.text || '');
+      mode = data.mode || 'plain';
+      textEl.className = '';
       textEl.style.color = data.textColor || '#ffffff';
-      if (data.align === 'left') textEl.classList.add('aleft');
-      else if (data.align === 'right') textEl.classList.add('aright');
+      textEl.style.textAlign = data.align === 'left' ? 'left' : (data.align === 'right' ? 'right' : 'center');
+      textEl.style.alignSelf = data.align === 'left' ? 'flex-start' : (data.align === 'right' ? 'flex-end' : 'center');
+      buildRichText(textEl, data.text || '');
+      applyTextSize();
 
-      // subsol: verset / mesaj mic
       if (data.footer) {
         footerEl.innerHTML = '';
-        const ft = document.createElement('span');
-        ft.innerText = data.footer;
-        footerEl.appendChild(ft);
-        if (data.footerRef) {
-          const ref = document.createElement('span');
-          ref.className = 'verse-ref';
-          ref.innerText = data.footerRef;
-          footerEl.appendChild(ref);
-        }
-        footerEl.style.display = 'block';
-      } else {
-        footerEl.innerHTML = '';
-        footerEl.style.display = 'none';
-      }
+        const ft = document.createElement('span'); ft.innerText = data.footer; footerEl.appendChild(ft);
+        if (data.footerRef) { const r = document.createElement('span'); r.className = 'verse-ref'; r.innerText = data.footerRef; footerEl.appendChild(r); }
+      } else { footerEl.innerHTML = ''; }
 
-      if (data.bgClass && !root.classList.contains('blackout')) {
-        root.className = data.bgClass;
-      }
+      if (data.bgClass) setBackground(data.bgClass);
     });
   </script>
 </body>

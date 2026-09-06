@@ -255,8 +255,8 @@ function createWindows() {
     y: externalDisplay.bounds.y,
     width: externalDisplay.bounds.width,
     height: externalDisplay.bounds.height,
-    fullscreen: displays.length > 1,
-    frame: displays.length <= 1,
+    fullscreen: true,
+    frame: false,
     alwaysOnTop: displays.length > 1,
     webPreferences: { nodeIntegration: true, contextIsolation: false }
   });
@@ -287,9 +287,9 @@ function createWindows() {
     const outputTemplate = path.join(downloadDir, '%(title)s.%(ext)s');
     let args = [];
     if (formatType === 'audio') {
-      args = [url, '-x', '--audio-format', 'mp3', '--audio-quality', '0', '--output', outputTemplate, '--newline'];
+      args = [url, '--no-playlist', '-x', '--audio-format', 'mp3', '--audio-quality', '0', '--output', outputTemplate, '--newline'];
     } else {
-      args = [url, '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', '--merge-output-format', 'mp4', '--output', outputTemplate, '--newline'];
+      args = [url, '--no-playlist', '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', '--merge-output-format', 'mp4', '--output', outputTemplate, '--newline'];
     }
     if (fs.existsSync(ffmpegPath)) args.push('--ffmpeg-location', ffmpegPath);
 
@@ -312,9 +312,35 @@ function createWindows() {
   });
 }
 
+function registerYtSearchHandler() {
+  ipcMain.handle('yt-search', (event, rawQuery) => new Promise((resolve) => {
+    const ytdlp = getBinPath('yt-dlp.exe');
+    if (!fs.existsSync(ytdlp)) { resolve({ ok: false, error: 'yt-dlp.exe nu exista in ' + ytdlp }); return; }
+    const q = String(rawQuery || '').trim();
+    if (!q) { resolve({ ok: false, error: 'Cautare goala' }); return; }
+    const proc = spawn(ytdlp, ['ytsearch10:' + q, '--flat-playlist', '--no-playlist', '--no-warnings', '--print', '%(id)s\t%(title)s\t%(duration_string)s']);
+    let out = '';
+    let err = '';
+    proc.stdout.on('data', (d) => { out += d.toString(); });
+    proc.stderr.on('data', (d) => { err += d.toString(); });
+    proc.on('close', () => {
+      const items = [];
+      for (const line of out.split(/\r?\n/)) {
+        const parts = line.split('\t');
+        if (parts.length >= 2 && parts[0] && parts[1]) {
+          items.push({ id: parts[0], title: parts[1], duration: parts[2] || '' });
+        }
+      }
+      resolve({ ok: true, items });
+    });
+    proc.on('error', (e) => resolve({ ok: false, error: String(e && e.message || e) }));
+  }));
+}
+
 app.whenReady().then(() => {
   registerSongDbHandlers();
   registerMediaHandlers();
+  registerYtSearchHandler();
   createWindows();
 });
 
