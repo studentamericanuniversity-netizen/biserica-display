@@ -265,7 +265,7 @@ function createWindows() {
     height: 880,
     title: 'Consola Tehnica de Control — Betania Copșa Mică',
     icon: path.join(__dirname, 'build', 'icon.png'),
-    webPreferences: { nodeIntegration: true, contextIsolation: false }
+    webPreferences: { nodeIntegration: true, contextIsolation: false, webviewTag: true }
   });
   controlWindow.loadFile('control.html');
 
