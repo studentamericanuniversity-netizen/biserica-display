@@ -129,6 +129,10 @@
       if (localVid) { try { localVid.pause(); } catch(e){} localVid = null; }
       media.innerHTML = '<div id="ytHolder"></div>';
     }
+    function hideMediaIfNeeded() {
+      const media = document.getElementById('mediaPlayer');
+      if (media && media.classList.contains('visible')) hideMedia();
+    }
     function stopAny() {
       if (ytPlayer) { try { ytPlayer.stopVideo(); } catch(e){} ytPlayer = null; }
       if (localVid) { try { localVid.pause(); } catch(e){} localVid = null; }
@@ -363,8 +367,10 @@
         media.innerHTML = '<img src="' + data.image + '" alt="">';
         media.classList.add('visible'); return;
       }
-      if (data.kind === 'clear' || data.mediaType === 'none') { hideMedia(); }
+      if (data.kind === 'clear' || data.mediaType === 'none') { hideMedia(); return; }
 
+      // La text (biblie/cantare/anunt) orice media vizibila se opreste, altfel nu s-ar vedea schimbarea
+      hideMediaIfNeeded();
       renderText(data);
     });
   </script>
