@@ -8,8 +8,64 @@ let controlWindow = null;
 let projectionWindow = null;
 let songDb = null;
 
+// Trimite date catre fereastra de proiectie DOAR daca exista si nu a fost distrusa
+// (elimina eroarea clasica Electron: "Object has been destroyed")
+function sendToProjection(channel, data) {
+  if (projectionWindow && !projectionWindow.isDestroyed()) {
+    try {
+      projectionWindow.webContents.send(channel, data);
+      return true;
+    } catch (e) {
+      console.error('Nu am putut trimite catre proiectie:', e);
+    }
+  }
+  return false;
+}
+
 // =========================================================
-// Baza de date cantece (cantari.db generat de scripts/build_full_database.js)
+// Date utilizator (cantece adaugate manual, imagini proprii)
+// =========================================================
+function userDataPath(...parts) {
+  return path.join(app.getPath('userData'), ...parts);
+}
+
+function ensureUserDir() {
+  const dir = userDataPath();
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+// --- cantece custom persistente (adăugate prin Smart Paste) ---
+function loadCustomSongs() {
+  try {
+    const f = userDataPath('custom_songs.json');
+    if (fs.existsSync(f)) {
+      const data = JSON.parse(fs.readFileSync(f, 'utf8'));
+      return Array.isArray(data.entries) ? data.entries : [];
+    }
+  } catch (e) { console.error('custom_songs.json:', e); }
+  return [];
+}
+
+function saveCustomSongs(list) {
+  ensureUserDir();
+  fs.writeFileSync(userDataPath('custom_songs.json'), JSON.stringify({ entries: list }, null, 1), 'utf8');
+}
+
+// --- media proprii (hărți / imagini adăugate de utilizator) ---
+function listUserMedia() {
+  const dir = userDataPath('media');
+  const out = [];
+  if (fs.existsSync(dir)) {
+    for (const f of fs.readdirSync(dir)) {
+      if (/\.(png|jpe?g|webp|gif)$/i.test(f)) out.push(f);
+    }
+  }
+  return out;
+}
+
+// =========================================================
+// Baza de date cantece (cantari.db)
 // =========================================================
 function getDatabasePath() {
   return app.isPackaged
@@ -30,94 +86,75 @@ function openSongDb() {
   }
 }
 
-// Elimina diacriticele (pentru cautare toleranta: 'Maretul' == 'Mărețul')
 function foldDiacritics(s) {
-  return String(s || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
-// Expresie SQL care aplica acelasi fold pe o coloana
 function sqlFold(col) {
   let expr = 'lower(' + col + ')';
-  const pairs = [
-    ['ă', 'a'], ['â', 'a'], ['î', 'i'], ['ș', 's'], ['ş', 's'],
-    ['ț', 't'], ['ţ', 't'], ['Ă', 'a'], ['Â', 'a'], ['Î', 'i'],
-    ['Ș', 's'], ['Ț', 't'],
-  ];
-  for (const [from, to] of pairs) {
-    expr = "replace(" + expr + ", '" + from + "', '" + to + "')";
-  }
+  const pairs = [['ă', 'a'], ['â', 'a'], ['î', 'i'], ['ș', 's'], ['ş', 's'], ['ț', 't'], ['ţ', 't']];
+  for (const [from, to] of pairs) expr = "replace(" + expr + ", '" + from + "', '" + to + "')";
   return expr;
 }
 
+function matchesCustom(song, q) {
+  if (!q) return true;
+  const f = foldDiacritics(q);
+  if (foldDiacritics(song.title).includes(f)) return true;
+  if (foldDiacritics(song.author || '').includes(f)) return true;
+  return (song.stanzas || []).some((st) => foldDiacritics(st.text).includes(f));
+}
+
 function registerSongDbHandlers() {
-  // Numar cantece in baza (folosit si ca "exista baza?" probe)
   ipcMain.handle('songs-count', () => {
     const db = openSongDb();
-    if (!db) return { db: false, count: 0 };
-    try {
-      const row = db.prepare('SELECT COUNT(*) AS c FROM songs').get();
-      return { db: true, count: row.c };
-    } catch (e) {
-      console.error(e);
-      return { db: false, count: 0 };
-    }
+    const dbCount = db ? db.prepare('SELECT COUNT(*) AS c FROM songs').get().c : 0;
+    const custom = loadCustomSongs().length;
+    return { db: !!db, count: dbCount + custom };
   });
 
-  // Cautare: titlu/autor prin LIKE (fold) + versuri prin FTS5
   ipcMain.handle('songs-search', (event, rawQuery) => {
     const db = openSongDb();
-    if (!db) return { db: false, songs: [] };
     const q = foldDiacritics(rawQuery).trim();
-    if (!q) return { db: true, songs: [] };
-    const like = '%' + q + '%';
-    const seen = new Set();
     const songs = [];
+    const seen = new Set();
 
-    try {
-      const byTitle = db
-        .prepare(
-          'SELECT id, title, author FROM songs WHERE ' + sqlFold('title') + ' LIKE ? OR ' + sqlFold('author') + ' LIKE ? ORDER BY title LIMIT 60'
-        )
-        .all(like, like);
-      for (const s of byTitle) {
-        if (seen.has(s.id)) continue;
-        seen.add(s.id);
-        songs.push(s);
-        if (songs.length >= 60) break;
-      }
-    } catch (e) {
-      console.error('Cautare titlu esuata:', e);
-    }
-
-    if (songs.length < 60) {
+    if (db) {
+      if (!q) return { db: true, songs: [], total: db.prepare('SELECT COUNT(*) AS c FROM songs').get().c };
+      const like = '%' + q + '%';
       try {
-        const terms = q.split(/\s+/).filter((w) => /^[a-z0-9]+$/.test(w) && w.length >= 2);
-        if (terms.length) {
-          const match = terms.map((t) => t + '*').join(' ');
-          const room = 60 - songs.length;
-          const byText = db
-            .prepare(
-              'SELECT s.id, s.title, s.author FROM songs s JOIN songs_fts f ON f.rowid = s.id WHERE songs_fts MATCH ? ORDER BY rank LIMIT ?'
-            )
-            .all(match, room);
-          for (const s of byText) {
-            if (seen.has(s.id)) continue;
-            seen.add(s.id);
-            songs.push(s);
+        const byTitle = db.prepare('SELECT id, title, author FROM songs WHERE ' + sqlFold('title') + ' LIKE ? OR ' + sqlFold('author') + ' LIKE ? ORDER BY title LIMIT 60').all(like, like);
+        for (const s of byTitle) { if (!seen.has(s.id)) { seen.add(s.id); songs.push(s); } }
+      } catch (e) { console.error(e); }
+      if (songs.length < 60) {
+        try {
+          const terms = q.split(/\s+/).filter((w) => /^[a-z0-9]+$/.test(w) && w.length >= 2);
+          if (terms.length) {
+            const match = terms.map((t) => t + '*').join(' ');
+            const byText = db.prepare('SELECT s.id, s.title, s.author FROM songs s JOIN songs_fts f ON f.rowid = s.id WHERE songs_fts MATCH ? ORDER BY rank LIMIT ?').all(match, 60 - songs.length);
+            for (const s of byText) if (!seen.has(s.id)) { seen.add(s.id); songs.push(s); }
           }
-        }
-      } catch (e) {
-        console.error('Cautare text esuata:', e);
+        } catch (e) { console.error(e); }
       }
     }
-    return { db: true, songs };
+
+    // cantece custom (adaugate de utilizator)
+    for (const c of loadCustomSongs()) {
+      if (seen.has(c.id)) continue;
+      if (matchesCustom(c, q)) {
+        seen.add(c.id);
+        songs.push({ id: c.id, title: c.title, author: c.author || '' });
+      }
+      if (songs.length >= 60) break;
+    }
+    return { db: !!db, songs };
   });
 
-  // Detaliile unui cantec (titlu, autor, strofe)
   ipcMain.handle('songs-get', (event, id) => {
+    if (id < 0) {
+      const c = loadCustomSongs().find((x) => x.id === id);
+      return c ? { title: c.title, author: c.author || '', stanzas: c.stanzas || [] } : null;
+    }
     const db = openSongDb();
     if (!db) return null;
     const row = db.prepare('SELECT title, author, stanzas FROM songs WHERE id = ?').get(id);
@@ -126,10 +163,73 @@ function registerSongDbHandlers() {
     try { stanzas = JSON.parse(row.stanzas); } catch (e) { console.error(e); }
     return { title: row.title, author: row.author, stanzas };
   });
+
+  // Smart Paste: adauga un cantec nou (persistent in userData)
+  ipcMain.handle('songs-add', (event, song) => {
+    const list = loadCustomSongs();
+    const nextId = list.length ? Math.min(...list.map((x) => x.id)) - 1 : -1;
+    const entry = {
+      id: nextId,
+      title: String(song.title || 'Cântec adăugat').trim(),
+      author: String(song.author || '').trim(),
+      stanzas: Array.isArray(song.stanzas) ? song.stanzas.filter((s) => s && s.text) : [],
+    };
+    list.push(entry);
+    saveCustomSongs(list);
+    return entry;
+  });
 }
 
 // =========================================================
-// Cale binare yt-dlp / ffmpeg
+// Media (hărți biblice / ilustrații): cele incluse + cele proprii
+// =========================================================
+function mediaSources() {
+  const out = [];
+  // imagini incluse in aplicatie (data/media/maps)
+  const builtInDir = app.isPackaged
+    ? path.join(process.resourcesPath, 'app.asar', 'data', 'media', 'maps')
+    : path.join(__dirname, 'data', 'media', 'maps');
+  try {
+    if (fs.existsSync(builtInDir)) {
+      for (const f of fs.readdirSync(builtInDir)) {
+        if (/\.(png|jpe?g|webp|gif)$/i.test(f)) {
+          out.push({ name: f, path: path.join(builtInDir, f), source: 'aplicatie' });
+        }
+      }
+    }
+  } catch (e) { /* folderul poate lipsi */ }
+  // imagini proprii (din folderul de date utilizator)
+  const userDir = userDataPath('media');
+  try {
+    if (fs.existsSync(userDir)) {
+      for (const f of fs.readdirSync(userDir)) {
+        if (/\.(png|jpe?g|webp|gif)$/i.test(f)) {
+          out.push({ name: f, path: path.join(userDir, f), source: 'ale tale' });
+        }
+      }
+    }
+  } catch (e) { /* ignore */ }
+  return out;
+}
+
+function registerMediaHandlers() {
+  ipcMain.handle('media-list', () => mediaSources());
+  ipcMain.handle('media-get', (event, filePath) => {
+    try {
+      const buf = fs.readFileSync(filePath);
+      const ext = path.extname(filePath).toLowerCase().replace('.', '');
+      const mime = ext === 'jpg' ? 'jpeg' : ext;
+      return { data: 'data:image/' + mime + ';base64,' + buf.toString('base64'), name: path.basename(filePath) };
+    } catch (e) {
+      console.error('media-get:', e);
+      return null;
+    }
+  });
+  ipcMain.handle('media-userdir', () => userDataPath('media'));
+}
+
+// =========================================================
+// Binare yt-dlp / ffmpeg
 // =========================================================
 function getBinPath(binName) {
   const basePath = app.isPackaged
@@ -142,19 +242,14 @@ function createWindows() {
   const displays = screen.getAllDisplays();
   const externalDisplay = displays.length > 1 ? displays[1] : displays[0];
 
-  // 1. Fereastra Operatorului
   controlWindow = new BrowserWindow({
-    width: 1250,
-    height: 850,
+    width: 1280,
+    height: 880,
     title: 'Consola Tehnica de Control',
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
-    }
+    webPreferences: { nodeIntegration: true, contextIsolation: false }
   });
   controlWindow.loadFile('control.html');
 
-  // 2. Fereastra de Proiectie (Fullscreen pe display-ul extern)
   projectionWindow = new BrowserWindow({
     x: externalDisplay.bounds.x,
     y: externalDisplay.bounds.y,
@@ -163,120 +258,63 @@ function createWindows() {
     fullscreen: displays.length > 1,
     frame: displays.length <= 1,
     alwaysOnTop: displays.length > 1,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
-    }
+    webPreferences: { nodeIntegration: true, contextIsolation: false }
   });
   projectionWindow.loadFile('projection.html');
 
-  // Sincronizare proiectie
   ipcMain.on('send-to-screen', (event, data) => {
-    if (projectionWindow) {
-      projectionWindow.webContents.send('render-slide', data);
-    }
+    sendToProjection('render-slide', data);
   });
 
-  // Deschidere director descarcari
   ipcMain.on('open-downloads-folder', () => {
     const downloadDir = path.join(app.getPath('downloads'), 'Negative Biserica');
-    if (!fs.existsSync(downloadDir)) {
-      fs.mkdirSync(downloadDir, { recursive: true });
-    }
+    if (!fs.existsSync(downloadDir)) fs.mkdirSync(downloadDir, { recursive: true });
     shell.openPath(downloadDir);
   });
 
-  // Modul Descarcare YouTube (yt-dlp + ffmpeg)
   ipcMain.on('start-download-media', (event, { url, formatType }) => {
     const ytdlpPath = getBinPath('yt-dlp.exe');
     const ffmpegPath = getBinPath('ffmpeg.exe');
     const downloadDir = path.join(app.getPath('downloads'), 'Negative Biserica');
-
-    if (!fs.existsSync(downloadDir)) {
-      fs.mkdirSync(downloadDir, { recursive: true });
-    }
+    if (!fs.existsSync(downloadDir)) fs.mkdirSync(downloadDir, { recursive: true });
 
     if (!fs.existsSync(ytdlpPath)) {
-      event.sender.send('download-status', {
-        status: 'error',
-        message: 'Binarul yt-dlp.exe nu a fost gasit in ' + ytdlpPath
-      });
+      event.sender.send('download-status', { status: 'error', message: 'Binarul yt-dlp.exe nu a fost gasit in ' + ytdlpPath });
       return;
     }
-
-    event.sender.send('download-status', {
-      status: 'started',
-      message: 'Initializare descarcare...'
-    });
+    event.sender.send('download-status', { status: 'started', message: 'Initializare descarcare...' });
 
     const outputTemplate = path.join(downloadDir, '%(title)s.%(ext)s');
     let args = [];
-
     if (formatType === 'audio') {
-      args = [
-        url,
-        '-x',
-        '--audio-format', 'mp3',
-        '--audio-quality', '0',
-        '--output', outputTemplate,
-        '--newline'
-      ];
+      args = [url, '-x', '--audio-format', 'mp3', '--audio-quality', '0', '--output', outputTemplate, '--newline'];
     } else {
-      args = [
-        url,
-        '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-        '--merge-output-format', 'mp4',
-        '--output', outputTemplate,
-        '--newline'
-      ];
+      args = [url, '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', '--merge-output-format', 'mp4', '--output', outputTemplate, '--newline'];
     }
-
-    if (fs.existsSync(ffmpegPath)) {
-      args.push('--ffmpeg-location', ffmpegPath);
-    }
+    if (fs.existsSync(ffmpegPath)) args.push('--ffmpeg-location', ffmpegPath);
 
     const dlProcess = spawn(ytdlpPath, args);
-
     dlProcess.stdout.on('data', (data) => {
       const text = data.toString();
-      const progressMatch = text.match(/\[download\]\s+([\d.]+)%/);
-      if (progressMatch) {
-        event.sender.send('download-status', {
-          status: 'progress',
-          progress: parseFloat(progressMatch[1]),
-          message: 'Descarcare: ' + progressMatch[1] + '%'
-        });
+      const pm = text.match(/\[download\]\s+([\d.]+)%/);
+      if (pm) {
+        event.sender.send('download-status', { status: 'progress', progress: parseFloat(pm[1]), message: 'Descarcare: ' + pm[1] + '%' });
       } else if (text.includes('[ExtractAudio]')) {
-        event.sender.send('download-status', {
-          status: 'progress',
-          progress: 95,
-          message: 'Conversie in format MP3...'
-        });
+        event.sender.send('download-status', { status: 'progress', progress: 95, message: 'Conversie in format MP3...' });
       }
     });
-
-    dlProcess.stderr.on('data', (data) => {
-      console.error('yt-dlp stderr: ' + data);
-    });
-
+    dlProcess.stderr.on('data', (data) => console.error('yt-dlp stderr: ' + data));
     dlProcess.on('close', (code) => {
-      if (code === 0) {
-        event.sender.send('download-status', {
-          status: 'completed',
-          message: 'Descarcare finalizata cu succes!'
-        });
-      } else {
-        event.sender.send('download-status', {
-          status: 'error',
-          message: 'Eroare la descarcare (cod iesire: ' + code + ')'
-        });
-      }
+      event.sender.send('download-status', code === 0
+        ? { status: 'completed', message: 'Descarcare finalizata cu succes!' }
+        : { status: 'error', message: 'Eroare la descarcare (cod iesire: ' + code + ')' });
     });
   });
 }
 
 app.whenReady().then(() => {
   registerSongDbHandlers();
+  registerMediaHandlers();
   createWindows();
 });
 

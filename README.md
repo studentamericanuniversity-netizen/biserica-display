@@ -14,6 +14,12 @@ operator. Rulează pe Windows, generată ca `.exe` portabil.
   cu bară de progres, salvare automată în folderul `Downloads/Negative Biserica`
 - **Control proiecție** — titlu + text, ecran negru, doar fundal, alertă derulantă
 - **Ceas digital** permanent pe ecranul de proiecție
+- **Selector Biblie manual** — Carte → Capitol → Verset (3 coloane) sau „Vezi tot capitolul"
+- **Slide-uri gata**: „Bine ați venit!" (cu verset în subsol), „Telefoane silențioase", „Liniște în Casa Domnului"
+- **Smart Paste cântări noi** — lipești textul de pe net, sistemul detectează strofe/refren/numerotare și îl adaugă permanent
+- **Editor anunțuri & predică** — aliniere, culori, fundaluri neutre, titluri (`###`), liste cu buline și subpuncte
+- **Hărți & ilustrații biblice** + adăugarea propriilor imagini
+- **Navigare cu săgeți** (↑ ↓ ← →) între strofe/versete
 - **Multi-monitor** — fereastra de proiecție se deschide automat pe ecranul extern
 
 ## Structura fișierelor
@@ -143,6 +149,17 @@ apoi reconstruiești baza cu `npm run db:build`.
    drepturile de autor ale traducerilor Biblice folosite.
 
 ---
+
+## Resurse vizuale (hărți & ilustrații)
+
+- Aplicația include un set de pornire cu **hărți biblice** (Călătoriile lui Pavel,
+  Regatele Israel, Ierusalim NT, Pământul Făgăduinței, Tabernacolul) — imagini
+  libere de pe Wikimedia Commons, în folderul `data/media/maps`.
+- Orice hartă/ilustrație **proprie** (`.png`/`.jpg`) o pui în folderul de date al
+  aplicației (afișat în aplicație la tab-ul „Hărți", de obicei
+  `%APPDATA%\BisericaProiectie\media`) și apasă „Reîncarcă lista".
+- Pentru fonduri cu imagini proprii, la fel: adaugi imaginea în același folder și
+  folosești „Fundal: Imagine" din Anunțuri.
 
 ## Personalizare rapidă
 
