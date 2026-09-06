@@ -6,20 +6,19 @@ const Database = require('better-sqlite3');
 
 let controlWindow = null;
 let projectionWindow = null;
+let previewWindow = null;
 let songDb = null;
 
 // Trimite date catre fereastra de proiectie DOAR daca exista si nu a fost distrusa
 // (elimina eroarea clasica Electron: "Object has been destroyed")
 function sendToProjection(channel, data) {
-  if (projectionWindow && !projectionWindow.isDestroyed()) {
-    try {
-      projectionWindow.webContents.send(channel, data);
-      return true;
-    } catch (e) {
-      console.error('Nu am putut trimite catre proiectie:', e);
-    }
+  const targets = [];
+  if (projectionWindow && !projectionWindow.isDestroyed()) targets.push(projectionWindow);
+  if (previewWindow && !previewWindow.isDestroyed()) targets.push(previewWindow);
+  for (const w of targets) {
+    try { w.webContents.send(channel, data); } catch (e) { console.error('send', e); }
   }
-  return false;
+  return targets.length > 0;
 }
 
 // =========================================================
@@ -291,6 +290,26 @@ function createWindows() {
 
   ipcMain.on('send-to-screen', (event, data) => {
     sendToProjection('render-slide', data);
+  });
+
+  // Fereastra mica de previzualizare (oglinda a ecranului de proiectie)
+  ipcMain.on('toggle-preview', () => {
+    if (previewWindow && !previewWindow.isDestroyed()) {
+      previewWindow.close();
+      previewWindow = null;
+      return;
+    }
+    previewWindow = new BrowserWindow({
+      width: 620,
+      height: 350,
+      title: 'Previzualizare — ce se proiectează',
+      icon: path.join(__dirname, 'build', 'icon.png'),
+      alwaysOnTop: true,
+      resizable: true,
+      webPreferences: { nodeIntegration: true, contextIsolation: false }
+    });
+    previewWindow.loadFile('projection.html');
+    previewWindow.on('closed', () => { previewWindow = null; });
   });
 
   ipcMain.on('open-downloads-folder', () => {

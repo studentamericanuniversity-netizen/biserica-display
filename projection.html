@@ -34,6 +34,14 @@
 
     .content-area { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;
       padding:8px 80px 24px; text-align:center; min-height:0; overflow:hidden; }
+    .content-area.with-panel {
+      background: linear-gradient(165deg, rgba(16,20,30,0.68), rgba(6,9,15,0.52));
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 28px; padding: 30px 60px;
+      max-width: 90%; align-self: center; margin: 0 auto;
+      box-shadow: 0 18px 70px rgba(0,0,0,0.5); backdrop-filter: blur(7px);
+    }
+    .content-area.welcome-left { justify-content: flex-start; align-items: flex-start; text-align: left; padding: 10vh 5vw 4vh 7vw; }
     #slideTitle { font-size:44px; font-weight:800; color:#f4c542; margin-bottom:22px; }
     #slideText { font-size:52px; font-weight:600; line-height:1.45; white-space:pre-line; max-width:94%; text-shadow:0 4px 18px rgba(0,0,0,.9); }
     #slideText .ch-header { display:block; font-size:.62em; font-weight:800; color:#f4c542; margin:.35em 0 .5em; }
@@ -56,7 +64,7 @@
 
   <div id="rootContent">
     <div class="top-header"><div id="clock">00:00:00</div></div>
-    <div class="content-area"><div id="slideTitle"></div><div id="slideText"></div></div>
+    <div class="content-area" id="contentArea"><div id="slideTitle"></div><div id="slideText"></div></div>
     <div id="footerMessage"></div>
   </div>
 
@@ -238,6 +246,10 @@
       titleEl.style.display = (data.title || '').trim() ? 'block' : 'none';
 
       mode = data.mode || 'plain';
+      const contentArea = document.getElementById('contentArea');
+      contentArea.className = 'content-area'
+        + (mode === 'plain' ? ' with-panel' : '')
+        + (mode === 'welcome' ? ' welcome-left' : '');
       textEl.className = '';
       textEl.style.color = data.textColor || '#ffffff';
       textEl.style.textAlign = data.align === 'left' ? 'left' : (data.align === 'right' ? 'right' : 'center');
