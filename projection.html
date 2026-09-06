@@ -20,11 +20,19 @@
       background-image: linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.55)),url('https://images.unsplash.com/photo-1519817650390-64a93db51149?q=80&w=1920&auto=format&fit=crop');
       background-size: cover; background-position: center;
     }
-    body.bg-custom { background: #000 no-repeat center center / cover; }
+    body.bg-custom { background: #000 no-repeat center center; }
     .blackout { background:#000 !important; }
     .blackout #rootContent, .blackout #mediaPlayer { display:none !important; }
 
-    #rootContent { flex:1; display:flex; flex-direction:column; justify-content:space-between; min-height:0; }
+    /* Voal intunecat pe TOT ecranul cand se proiecteaza ceva (cantare/biblie/anunt) */
+    #veil {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background: linear-gradient(180deg, rgba(6,8,13,0.82), rgba(6,8,13,0.72));
+      opacity: 0; transition: opacity 0.35s ease;
+    }
+    #veil.on { opacity: 1; }
+
+    #rootContent { flex:1; display:flex; flex-direction:column; justify-content:space-between; min-height:0; position:relative; z-index:2; }
 
     /* Ceas: fara chip, "in interiorul" fundalului, armonizat */
     .top-header { padding: 22px 34px 0 34px; display:flex; justify-content:flex-end; }
@@ -59,6 +67,8 @@
   </style>
 </head>
 <body id="displayRoot" class="bg-neutru-inchis">
+
+  <div id="veil"></div>
 
   <div id="rootContent">
     <div class="top-header"><div id="clock">--:--</div></div>
@@ -227,6 +237,10 @@
       const area = document.getElementById('contentArea');
       const textEl = document.getElementById('slideText');
       const footerEl = document.getElementById('footerMessage');
+      // cand se proiecteaza continut (cantare/biblie/anunt) -> tot ecranul cu voal intunecat;
+      // la bun-venit poza ramane clara
+      const veil = document.getElementById('veil');
+      if (veil) veil.classList.toggle('on', mode === 'plain' || mode === 'notice');
 
       area.className = 'content-area' + (mode === 'welcome' ? ' welcome-left' : '');
       textEl.style.color = data.textColor || '#ffffff';
