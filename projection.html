@@ -392,6 +392,7 @@
       if (data.kind === 'ytcmd') { ytCommand(data.cmd); return; }
       if (data.kind === 'yt' && data.videoId) { playYoutube(data.videoId); return; }
       if (data.kind === 'local' && data.src) { playLocal(data.src); return; }
+      if (data.kind === 'ytstream' && data.src) { playLocal(data.src); return; }
       if (data.kind === 'image' && data.image) {
         stopAny();
         media.innerHTML = '<img src="' + data.image + '" alt="">';

@@ -803,10 +803,29 @@ text normal pe o linie..."></textarea>
       else if (id.includes('youtu.be/')) id = id.split('youtu.be/')[1].split('?')[0];
       return id;
     }
+    // Redare INTERNA directa: cere URL-ul real prin yt-dlp si il pune in playerul nostru
+    async function playResolved(raw) {
+      const id = extractVideoId(raw) || String(raw || '').trim();
+      if (!id) { alert('Introdu link sau ID YouTube.'); return; }
+      const status = document.getElementById('downloadStatus');
+      if (status) status.innerText = 'Se pregătește redarea internă...';
+      try {
+        const r = await ipcRenderer.invoke('yt-resolve', id);
+        if (r && r.ok && r.url) {
+          sendPayload({ kind:'ytstream', src: r.url });
+          if (status) status.innerText = '▶ Redare internă activă (YouTube)';
+          return;
+        }
+        // daca nu putem obtine fluxul -> incercam embed-ul clasic
+        sendPayload({ kind:'yt', videoId: id });
+        if (status) status.innerText = 'Redare prin embed (YouTube a restricționat fluxul: ' + ((r && r.error) || 'eroare') + ')';
+      } catch(e) {
+        console.warn(e);
+        sendPayload({ kind:'yt', videoId: id });
+      }
+    }
     function loadYoutube() {
-      const id = extractVideoId(document.getElementById('ytVideoInput').value);
-      if (!id) return alert('Introdu link sau ID YouTube.');
-      sendPayload({ kind:'yt', videoId: id });
+      playResolved(document.getElementById('ytVideoInput').value);
     }
     function stopYoutube(){ stopAndHome(); }
 
@@ -835,7 +854,7 @@ text normal pe o linie..."></textarea>
           d.appendChild(t); d.appendChild(a);
           d.onclick = () => {
             document.getElementById('ytVideoInput').value = it.id;
-            sendPayload({ kind:'yt', videoId: it.id });
+            playResolved(it.id);
           };
           box.appendChild(d);
         });

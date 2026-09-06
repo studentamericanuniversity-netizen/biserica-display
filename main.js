@@ -414,6 +414,28 @@ function createWindows() {
 }
 
 function registerYtSearchHandler() {
+  // Redare directa: obtine URL-ul real al videoclipului prin yt-dlp (fara embed YouTube)
+  ipcMain.handle('yt-resolve', (event, raw) => new Promise((resolve) => {
+    const ytdlp = getBinPath('yt-dlp.exe');
+    if (!fs.existsSync(ytdlp)) { resolve({ ok: false, error: 'yt-dlp lipseste' }); return; }
+    let url = String(raw || '').trim();
+    if (/^[a-zA-Z0-9_-]{11}$/.test(url)) url = 'https://www.youtube.com/watch?v=' + url;
+    if (!/^https?:\/\//i.test(url)) { resolve({ ok: false, error: 'Link invalid' }); return; }
+    const proc = spawn(ytdlp, [url, '--no-playlist', '--no-warnings', '-f', 'best[ext=mp4]/best', '-g']);
+    let out = '';
+    let err = '';
+    proc.stdout.on('data', (d) => { out += d.toString(); });
+    proc.stderr.on('data', (d) => { err += d.toString(); });
+    const timer = setTimeout(() => { try { proc.kill(); } catch(e){} resolve({ ok:false, error:'Timeout (retea/restrictii YouTube)' }); }, 40000);
+    proc.on('close', () => {
+      clearTimeout(timer);
+      const line = out.split(/\r?\n/).map((s) => s.trim()).find((s) => /^https?:\/\//i.test(s));
+      if (line) resolve({ ok: true, url: line });
+      else resolve({ ok: false, error: (err.split(/\r?\n/).filter(Boolean).slice(-2).join(' ') || 'Nu am putut obtine fluxul') });
+    });
+    proc.on('error', (e) => { clearTimeout(timer); resolve({ ok: false, error: String((e && e.message) || e) }); });
+  }));
+
   ipcMain.handle('yt-search', (event, rawQuery) => new Promise((resolve) => {
     const ytdlp = getBinPath('yt-dlp.exe');
     if (!fs.existsSync(ytdlp)) { resolve({ ok: false, error: 'yt-dlp.exe nu exista in ' + ytdlp }); return; }
