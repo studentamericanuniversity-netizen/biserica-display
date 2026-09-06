@@ -21,7 +21,8 @@
     "appId": "ro.biserica.proiectie",
     "productName": "BisericaProiectie",
     "win": {
-      "target": "portable"
+      "target": "portable",
+      "icon": "build/icon.ico"
     },
     "extraResources": [
       {

@@ -245,7 +245,8 @@ function createWindows() {
   controlWindow = new BrowserWindow({
     width: 1280,
     height: 880,
-    title: 'Consola Tehnica de Control',
+    title: 'Consola Tehnica de Control — Betania Copșa Mică',
+    icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: { nodeIntegration: true, contextIsolation: false }
   });
   controlWindow.loadFile('control.html');
@@ -258,6 +259,7 @@ function createWindows() {
     fullscreen: true,
     frame: false,
     alwaysOnTop: displays.length > 1,
+    icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: { nodeIntegration: true, contextIsolation: false }
   });
   projectionWindow.loadFile('projection.html');
@@ -338,6 +340,7 @@ function registerYtSearchHandler() {
 }
 
 app.whenReady().then(() => {
+  app.setAppUserModelId('ro.biserica.betania.copsamica');
   registerSongDbHandlers();
   registerMediaHandlers();
   registerYtSearchHandler();
