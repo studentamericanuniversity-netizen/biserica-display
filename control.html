@@ -49,7 +49,7 @@
   <!-- ================= SIDEBAR ================= -->
   <div class="sidebar">
     <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--border);">
-      <img src="build/icon.png" alt="" style="width:52px; height:52px; object-fit:contain; border-radius:8px;">
+      <img id="appLogo" src="build/icon.png" alt="Logo" style="width:52px; height:52px; object-fit:contain; border-radius:8px;">
       <div>
         <div style="font-weight:800; font-size:15px;">Betania</div>
         <div style="font-size:12px; color:var(--muted);">Copșa Mică</div>
@@ -121,10 +121,11 @@ text normal pe o linie..."></textarea>
           <option value="right">Aliniere: Dreapta</option>
         </select>
         <select id="annBg">
+          <option value="custom">Fundal: Poza bisericii</option>
           <option value="bg-neutru-inchis">Fundal: Neutru închis</option>
           <option value="bg-albastru">Fundal: Albastru discret</option>
           <option value="bg-gri">Fundal: Gri</option>
-          <option value="bg-imagine">Fundal: Imagine</option>
+          <option value="bg-imagine">Fundal: Imagine (Unsplash)</option>
           <option value="bg-negru">Fundal: Negru</option>
         </select>
       </div>
@@ -175,6 +176,12 @@ text normal pe o linie..."></textarea>
       </div>
 
       <hr class="sep">
+      <div class="sec-title">📁 Videoclipuri descărcate (local)</div>
+      <button class="btn-m" style="width:100%;" onclick="refreshLocalVideos()">🔄 Arată lista descărcatelor</button>
+      <div id="localVideos" class="small" style="margin-top:6px;"></div>
+      <p class="small">Se listează fișierele din Downloads\Negative Biserica (MP4/MP3/m4a etc.). Click pe un fișier → redare pe ecran, controlată cu butoanele de mai sus.</p>
+
+      <hr class="sep">
       <div class="sec-title">Descărcare negativ (un singur videoclip)</div>
       <p class="small">Se descarcă DOAR clipul din link, nu lista/playlist-ul. Salvare în Downloads\Negative Biserica.</p>
       <div class="row">
@@ -206,10 +213,11 @@ text normal pe o linie..."></textarea>
         <button class="btn-m" onclick="fontAdj(-1)" title="Mărire font">A−</button>
         <button class="btn-m" onclick="fontAdj(1)" title="Micșorare font">A+</button>
         <select id="quickBg" onchange="quickBgChange()" style="margin-bottom:0;">
+          <option value="custom">Fundal: Poza bisericii</option>
           <option value="bg-neutru-inchis">Fundal: Neutru închis</option>
           <option value="bg-albastru">Fundal: Albastru discret</option>
           <option value="bg-gri">Fundal: Gri</option>
-          <option value="bg-imagine">Fundal: Imagine</option>
+          <option value="bg-imagine">Fundal: Imagine (Unsplash)</option>
           <option value="bg-negru">Fundal: Negru</option>
         </select>
       </div>
@@ -237,6 +245,7 @@ text normal pe o linie..."></textarea>
     let songsData = [];
     let songDbAvailable = false;
     let searchSeq = 0;
+    let customBgData = null;
 
     function loadJsonFile(fileName) {
       try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'data', fileName), 'utf8')); }
@@ -477,6 +486,28 @@ text normal pe o linie..."></textarea>
       if (title && labelRe.test(title)) title = null;
       return { title, stanzas };
     }
+    async function refreshLocalVideos() {
+      const box = document.getElementById('localVideos');
+      box.innerHTML = 'Se citește folderul...';
+      try {
+        const list = await ipcRenderer.invoke('videos-list');
+        box.innerHTML = '';
+        if (!list || !list.length) { box.appendChild(makeNote('Niciun fișier descărcat încă — descarcă mai întâi un negativ (MP3/MP4).')); return; }
+        list.forEach(f => {
+          const d = document.createElement('div');
+          d.className = 'item-card';
+          const t = document.createElement('div'); t.className = 'item-t'; t.innerText = f.name;
+          const a = document.createElement('div'); a.style.fontSize = '11px'; a.innerText = f.kind === 'audio' ? 'Audio local' : 'Video local';
+          d.appendChild(t); d.appendChild(a);
+          d.onclick = () => {
+            const fileUrl = 'file:///' + f.path.replace(/\\/g, '/');
+            sendPayload({ kind: 'local', src: encodeURI(fileUrl) });
+          };
+          box.appendChild(d);
+        });
+      } catch(e) { console.warn(e); box.innerHTML = 'Eroare la listarea folderului.'; }
+    }
+
     async function smartAddSong() {
       const raw = document.getElementById('newSongText').value;
       if (!raw.trim()) { alert('Lipește întâi textul cântecului.'); return; }
@@ -505,20 +536,30 @@ text normal pe o linie..."></textarea>
       const t = document.getElementById('annTitle').value;
       const x = document.getElementById('annText').value;
       const footer = document.getElementById('annFooter').value;
-      sendPayload(Object.assign({ kind:'slide', title:t, text:x, footer: footer||'' }, annOptions()));
+      sendPayload(resolveBg(Object.assign({ kind:'slide', title:t, text:x, footer: footer||'' }, annOptions())));
       setNav(t || 'Anunț', [{ label: t || 'Anunț', text: x }], 0);
     }
     function projectEditor() {
       const t = document.getElementById('displayTitle').value;
       const x = document.getElementById('displayText').value;
-      sendPayload(Object.assign({ kind:'slide', title:t, text:x }, annOptions({ align:'center' })));
+      sendPayload(resolveBg(Object.assign({ kind:'slide', title:t, text:x }, annOptions({ align:'center' }))));
     }
     function blackoutScreen(){ sendPayload({ kind:'black' }); }
     function bgNow() {
       const q = document.getElementById('quickBg');
-      return q && q.value ? q.value : 'bg-neutru-inchis';
+      return q && q.value ? q.value : 'custom';
     }
-    function backgroundOnly(){ sendPayload({ kind:'bg', bgClass: bgNow() }); }
+    function backgroundOnly() {
+      if (bgNow() === 'custom' && customBgData) { sendPayload({ kind:'bg', image: customBgData }); return; }
+      sendPayload({ kind:'bg', bgClass: bgNow() });
+    }
+    function resolveBg(o) {
+      if (o.bgClass === 'custom') {
+        if (customBgData) o.image = customBgData;
+        delete o.bgClass;
+      }
+      return o;
+    }
     function setBg(cls){ sendPayload({ kind:'bg', bgClass: cls }); }
     function quickWelcome() {
       sendPayload({ kind:'slide', title:'Bine ați venit!', mode:'welcome',
@@ -580,7 +621,9 @@ text normal pe o linie..."></textarea>
     function ytTransport(cmd) { sendPayload({ kind:'ytcmd', cmd: cmd }); }
     function fontAdj(d) { sendPayload({ kind:'font', delta: d * 0.09 }); }
     function quickBgChange() {
-      sendPayload({ kind:'bg', bgClass: document.getElementById('quickBg').value });
+      const v = document.getElementById('quickBg').value;
+      if (v === 'custom' && customBgData) { sendPayload({ kind:'bg', image: customBgData }); return; }
+      sendPayload({ kind:'bg', bgClass: v });
     }
 
     function triggerDownload(fmt) {
@@ -615,17 +658,50 @@ text normal pe o linie..."></textarea>
           const t = document.createElement('div'); t.className='item-t'; t.innerText = m.name;
           const a = document.createElement('div'); a.style.fontSize='12px'; a.innerText = 'Sursă: ' + m.source;
           d.appendChild(t); d.appendChild(a);
-          d.onclick = async () => {
+          d.onclick = null;
+          const act = document.createElement('div');
+          act.style.cssText = 'display:flex; gap:6px; margin-top:6px;';
+          const bShow = document.createElement('button'); bShow.className = 'btn-p'; bShow.style.flex = '1'; bShow.innerText = 'Proiectează';
+          bShow.onclick = async (ev) => {
+            ev.stopPropagation();
             const img = await ipcRenderer.invoke('media-get', m.path);
-            if (img) sendPayload({ kind:'image', image: img.data });
+            if (img) sendPayload({ kind: 'image', image: img.data });
           };
+          const bBg = document.createElement('button'); bBg.className = 'btn-m'; bBg.style.flex = '1'; bBg.innerText = 'Pune ca fundal';
+          bBg.onclick = async (ev) => {
+            ev.stopPropagation();
+            const img = await ipcRenderer.invoke('media-get', m.path);
+            if (img) { customBgData = img.data; sendPayload({ kind:'bg', image: customBgData }); const qb=document.getElementById('quickBg'); if(qb) qb.value='custom'; }
+          };
+          act.appendChild(bShow); act.appendChild(bBg); d.appendChild(act);
           box.appendChild(d);
         });
       } catch(e) { console.warn(e); box.innerHTML = 'Eroare la încărcarea listei.'; }
     }
 
+    // ---- Logo + fundal + ecran de pornire ----
+    function loadAssetAsDataUrl(rel) {
+      try {
+        const b = fs.readFileSync(path.join(__dirname, rel));
+        return 'data:image/png;base64,' + b.toString('base64');
+      } catch(e) { console.warn('asset lipsa:', rel); return null; }
+    }
+    function showHome() {
+      if (customBgData) sendPayload({ kind:'bg', image: customBgData });
+      sendPayload({ kind:'slide', title:'Betania Copșa Mică', mode:'welcome',
+        text:'Bine ați venit în Casa Domnului!\nNe bucurăm că sunteți cu noi.',
+        footer:'„Bucurați-vă totdeauna în Domnul!"', footerRef:'Filipeni 4:4',
+        titleColor:'#f4c542', textColor:'#ffffff', align:'center' });
+    }
     // init
     fillBookSelect();
+    (function initUi() {
+      const logo = loadAssetAsDataUrl('build/icon.png');
+      if (logo) { const el = document.getElementById('appLogo'); if (el) el.src = logo; }
+      customBgData = loadAssetAsDataUrl(path.join('data','media','backgrounds','bis.png'));
+      // dupa ce fereastra de proiectie e pregatita, aratam ecranul de bun-venit
+      setTimeout(showHome, 1200);
+    })();
   </script>
 </body>
 </html>

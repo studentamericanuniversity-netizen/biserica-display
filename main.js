@@ -226,6 +226,23 @@ function registerMediaHandlers() {
     }
   });
   ipcMain.handle('media-userdir', () => userDataPath('media'));
+
+  // Lista videoclipurilor/audio descarcate (local), pentru redare integrata
+  ipcMain.handle('videos-list', () => {
+    const out = [];
+    const vre = /\.(mp4|m4a|webm|mov|mkv|mp3|wav|ogg|flac|aac)$/i;
+    const are = /\.(mp3|wav|ogg|flac|aac|m4a)$/i;
+    const dirs = [path.join(app.getPath('downloads'), 'Negative Biserica'), userDataPath('media')];
+    for (const dir of dirs) {
+      try {
+        if (!fs.existsSync(dir)) continue;
+        for (const f of fs.readdirSync(dir)) {
+          if (vre.test(f)) out.push({ name: f, path: path.join(dir, f), kind: are.test(f) ? 'audio' : 'video' });
+        }
+      } catch (e) { /* folder ilizibil */ }
+    }
+    return out;
+  });
 }
 
 // =========================================================
@@ -241,6 +258,7 @@ function getBinPath(binName) {
 function createWindows() {
   const displays = screen.getAllDisplays();
   const externalDisplay = displays.length > 1 ? displays[1] : displays[0];
+  const multi = displays.length > 1;
 
   controlWindow = new BrowserWindow({
     width: 1280,
@@ -256,13 +274,20 @@ function createWindows() {
     y: externalDisplay.bounds.y,
     width: externalDisplay.bounds.width,
     height: externalDisplay.bounds.height,
-    fullscreen: true,
+    fullscreen: multi,
     frame: false,
-    alwaysOnTop: displays.length > 1,
+    alwaysOnTop: multi,
     icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: { nodeIntegration: true, contextIsolation: false }
   });
   projectionWindow.loadFile('projection.html');
+
+  // Pe un singur monitor, panoul ramane vizibil deasupra proiectiei (pentru test/operare)
+  if (!multi) {
+    controlWindow.setAlwaysOnTop(true);
+    controlWindow.show();
+    controlWindow.focus();
+  }
 
   ipcMain.on('send-to-screen', (event, data) => {
     sendToProjection('render-slide', data);
