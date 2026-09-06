@@ -44,6 +44,13 @@
     .content-area { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;
       padding: 6px 4vw 8px 4vw; text-align:center; min-height:0; overflow:hidden; width:100%; }
     .content-area.welcome-left { justify-content:center; align-items:flex-start; text-align:left; padding: 12vh 6vw 4vh 8vw; }
+    .content-area.home-duo { justify-content:flex-start; align-items:stretch; text-align:left; padding: 11vh 4vw 4vh; }
+    .duo-tray { display:flex; width:100%; justify-content:space-between; align-items:flex-start; gap:5vw; }
+    .duo-tray.hidden { display:none; }
+    .duo-l { max-width:52%; font-size:62px; font-weight:800; line-height:1.25; color:#f4c542; text-shadow:0 5px 30px rgba(0,0,0,.95); }
+    .duo-l .sub { display:block; margin-top:0.35em; font-size:.72em; font-weight:600; color:#ffffff; }
+    .duo-r { max-width:44%; font-size:40px; font-weight:700; line-height:1.3; color:#ffffff; text-shadow:0 4px 22px rgba(0,0,0,.95); }
+    .duo-r .ref { display:block; margin-top:.5em; font-size:.6em; color:#f4c542; font-weight:800; }
     #slideText {
       max-width: 96%; font-weight: 700; line-height: 1.32;
       white-space: pre-line;
@@ -231,11 +238,81 @@
       }
     }
 
+    function getDuoTray() {
+      let tray = document.getElementById('duoTray');
+      if (!tray) {
+        tray = document.createElement('div');
+        tray.id = 'duoTray';
+        tray.className = 'duo-tray hidden';
+        const area = document.getElementById('contentArea');
+        area.insertBefore(tray, area.firstChild);
+      }
+      return tray;
+    }
+    function textToSpans(container, raw, cls) {
+      container.className = cls;
+      container.innerHTML = '';
+      const lines = String(raw || '').split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        if (!lines[i].trim()) { container.appendChild(document.createElement('br')); continue; }
+        const s = document.createElement('span');
+        s.style.display = 'block';
+        s.innerText = lines[i];
+        container.appendChild(s);
+      }
+    }
+    function renderHomeDuo(data) {
+      lastTextData = data;
+      mode = 'home-duo';
+      const area = document.getElementById('contentArea');
+      const textEl = document.getElementById('slideText');
+      const footerEl = document.getElementById('footerMessage');
+      const veil = document.getElementById('veil');
+      if (veil) veil.classList.remove('on');
+      area.className = 'content-area home-duo';
+      textEl.style.display = 'none';
+      footerEl.innerHTML = '';
+      const tray = getDuoTray();
+      tray.classList.remove('hidden');
+      let left = tray.querySelector('.duo-l');
+      let right = tray.querySelector('.duo-r');
+      if (!left) { left = document.createElement('div'); left.className = 'duo-l'; tray.appendChild(left); }
+      if (!right) { right = document.createElement('div'); right.className = 'duo-r'; tray.appendChild(right); }
+      // left: numele bisericii + bine ati venit (rândul 2 mai mic)
+      const lLines = String(data.homeLeft || 'Betania Copșa Mică\nBine ați venit în Casa Domnului!').split('\n');
+      left.innerHTML = '';
+      for (let i = 0; i < lLines.length; i++) {
+        const s = document.createElement('span');
+        s.style.display = 'block';
+        if (i === 1) { s.style.fontSize = '.72em'; s.style.fontWeight = '600'; s.style.color = '#ffffff'; }
+        s.innerText = lLines[i];
+        left.appendChild(s);
+      }
+      right.innerHTML = '';
+      const rLines = String(data.homeRight || '„Noi propovăduim pe Hristos cel răstignit."').split('\n');
+      for (let i = 0; i < rLines.length; i++) {
+        const s = document.createElement('span'); s.style.display = 'block'; s.innerText = rLines[i];
+        right.appendChild(s);
+      }
+      if (data.homeRef) {
+        const ref = document.createElement('span');
+        ref.className = 'ref';
+        ref.innerText = data.homeRef;
+        right.appendChild(ref);
+      }
+      if (data.bgClass) setBackground(data.bgClass);
+    }
+
     function renderText(data) {
       lastTextData = data;
+      // ecranul de start in doua blocuri: stanga + dreapta
+      if (data.mode === 'home-duo' || data.homeLeft) { renderHomeDuo(data); return; }
+      const tray0 = getDuoTray();
+      if (tray0) tray0.classList.add('hidden');
       mode = data.mode || 'plain';
       const area = document.getElementById('contentArea');
       const textEl = document.getElementById('slideText');
+      textEl.style.display = 'block';
       const footerEl = document.getElementById('footerMessage');
       // cand se proiecteaza continut (cantare/biblie/anunt) -> tot ecranul cu voal intunecat;
       // la bun-venit poza ramane clara
