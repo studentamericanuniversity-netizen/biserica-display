@@ -228,6 +228,11 @@ text normal pe o linie..."></textarea>
       </div>
     </div>
 
+      <div class="row-ctl">
+        <button class="btn-m" style="flex:1;" onclick="toggleProjFullscreen()" title="Pornește/oprește ecranul complet al proiecției (și cu tasta F11)">⛶ Proiecție fullscreen (F11)</button>
+      </div>
+    </div>
+
     <div style="background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; display:none;" id="addSongCard">
       <div class="sec-title" style="margin-top:0;">➕ Adaugă cântec nou (nu-l avem în listă)</div>
       <div class="row" style="margin-bottom:8px;">
@@ -420,7 +425,9 @@ text normal pe o linie..."></textarea>
         box.appendChild(b);
       });
     }
+    function toggleProjFullscreen() { ipcRenderer.send('toggle-proj-fullscreen'); }
     window.addEventListener('keydown', (e) => {
+      if (e.key === 'F11') { e.preventDefault(); toggleProjFullscreen(); return; }
       const tag = (e.target.tagName || '').toUpperCase();
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); navDelta(1); }

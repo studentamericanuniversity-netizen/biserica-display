@@ -274,7 +274,7 @@ function createWindows() {
     y: externalDisplay.bounds.y,
     width: externalDisplay.bounds.width,
     height: externalDisplay.bounds.height,
-    fullscreen: true,
+    fullscreen: multi,
     frame: false,
     alwaysOnTop: multi,
     icon: path.join(__dirname, 'build', 'icon.png'),
@@ -282,8 +282,23 @@ function createWindows() {
   });
   projectionWindow.loadFile('projection.html');
 
-  // Comenzamos cu o fereastra de proiectie mereu fullscreen (peste tot).
-  projectionWindow.once('ready-to-show', () => projectionWindow.show());
+  // Pe UN singur ecran: panoul ramane deasupra si focalizat, ca sa poti scrie.
+  // Fullscreen-ul proiectiei se activeaza cu F11 / butonul „⛶".
+  if (!multi) {
+    projectionWindow.setFullScreen(false);
+    controlWindow.setAlwaysOnTop(true);
+    controlWindow.show();
+    controlWindow.focus();
+  }
+
+  // F11 / comanda: porneste/opreste fullscreen-ul proiectiei
+  ipcMain.on('toggle-proj-fullscreen', () => {
+    if (projectionWindow && !projectionWindow.isDestroyed()) {
+      projectionWindow.setFullScreen(!projectionWindow.isFullScreen());
+      if (projectionWindow.isFullScreen()) projectionWindow.focus();
+      else { controlWindow.setAlwaysOnTop(true); controlWindow.show(); controlWindow.focus(); }
+    }
+  });
 
   ipcMain.on('send-to-screen', (event, data) => {
     sendToProjection('render-slide', data);
