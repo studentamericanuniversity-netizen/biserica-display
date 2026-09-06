@@ -228,6 +228,22 @@ text normal pe o linie..."></textarea>
       </div>
     </div>
 
+    <div style="background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; display:none;" id="addSongCard">
+      <div class="sec-title" style="margin-top:0;">➕ Adaugă cântec nou (nu-l avem în listă)</div>
+      <div class="row" style="margin-bottom:8px;">
+        <input type="text" id="newSongTitleR" placeholder="Titlul cântecului *">
+        <input type="text" id="newSongAuthorR" placeholder="Autor (opțional)">
+      </div>
+      <textarea id="newStanzaInput" rows="4" placeholder="Lipește aici STROFA (un rând pe linie) — apoi apasă „Adaugă strofa"..."></textarea>
+      <div class="row-ctl">
+        <button class="btn-ok" onclick="addStanzaR()">➕ Adaugă strofa</button>
+        <button class="btn-p" onclick="saveNewSongR()">💾 Salvează cântecul</button>
+      </div>
+      <div class="small" id="stanzaCountR" style="margin-top:6px;">Strofe adăugate: 0 / 20</div>
+      <div id="newStanzaList" style="margin-top:6px;"></div>
+      <div class="small" id="newSongStatusR" style="margin-top:6px;"></div>
+    </div>
+
     <div style="background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px;" id="rcCard">
       <div class="sec-title" style="margin-top:0;">Proiecție online RC (în panou)</div>
       <div class="row-ctl">
@@ -308,6 +324,9 @@ text normal pe o linie..."></textarea>
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       el.classList.add('active');
+      // compozitorul de cântece apare în dreapta doar la tab-ul Cântări
+      const asc = document.getElementById('addSongCard');
+      if (asc) asc.style.display = (id === 'tab-songs') ? 'block' : 'none';
     }
 
     function sendPayload(p) { updatePreview(p); ipcRenderer.send('send-to-screen', p); }
@@ -581,6 +600,65 @@ text normal pe o linie..."></textarea>
       if (title && labelRe.test(title)) title = null;
       return { title, stanzas };
     }
+    // ---- Compozitor cântece noi (dreapta, la tab-ul Cântări) ----
+    let rcNewStanzas = [];
+    function renderStanzaListR() {
+      const box = document.getElementById('newStanzaList');
+      box.innerHTML = '';
+      rcNewStanzas.forEach((st, i) => {
+        const d = document.createElement('div');
+        d.className = 'item-card';
+        d.style.display = 'flex';
+        d.style.alignItems = 'flex-start';
+        d.style.gap = '8px';
+        const lab = document.createElement('div');
+        lab.style.minWidth = '74px';
+        lab.style.fontWeight = '700';
+        lab.style.color = '#60a5fa';
+        lab.innerText = st.type;
+        const txt = document.createElement('div');
+        txt.style.flex = '1';
+        txt.style.fontSize = '12.5px';
+        txt.innerText = st.text.length > 160 ? st.text.slice(0, 160) + '…' : st.text;
+        const del = document.createElement('button');
+        del.className = 'btn-d';
+        del.style.padding = '4px 8px';
+        del.innerText = '✕';
+        del.onclick = () => { rcNewStanzas.splice(i, 1); renderStanzaListR(); };
+        d.appendChild(lab); d.appendChild(txt); d.appendChild(del);
+        box.appendChild(d);
+      });
+      const cnt = document.getElementById('stanzaCountR');
+      if (cnt) cnt.innerText = 'Strofe adăugate: ' + rcNewStanzas.length + ' / 20';
+    }
+    function addStanzaR() {
+      const ta = document.getElementById('newStanzaInput');
+      const raw = (ta.value || '').trim();
+      if (!raw) { alert('Lipește textul strofei înainte.'); return; }
+      if (rcNewStanzas.length >= 20) { alert('Maxim 20 de strofe per cântec.'); return; }
+      const first = raw.split('\n')[0].trim().toLowerCase();
+      const type = /^(refren|refrenul|cor|chorus)/i.test(first) ? 'Refren' : 'Strofa ' + (rcNewStanzas.length + 1);
+      rcNewStanzas.push({ type: type, text: raw });
+      ta.value = '';
+      renderStanzaListR();
+    }
+    async function saveNewSongR() {
+      const title = document.getElementById('newSongTitleR').value.trim();
+      const author = document.getElementById('newSongAuthorR').value.trim();
+      if (!title) { alert('Introdu titlul cântecului.'); return; }
+      if (!rcNewStanzas.length) { alert('Adaugă cel puțin o strofă.'); return; }
+      try {
+        const entry = await ipcRenderer.invoke('songs-add', { title: title, author: author, stanzas: rcNewStanzas });
+        const st = document.getElementById('newSongStatusR');
+        if (st) st.innerText = '✅ Salvat: „' + entry.title + '" — ' + entry.stanzas.length + ' strofe. Îl găsești la căutare.';
+        rcNewStanzas = [];
+        renderStanzaListR();
+        document.getElementById('newSongTitleR').value = '';
+        document.getElementById('newSongAuthorR').value = '';
+        selectSong({ title: entry.title, author: entry.author, stanzas: entry.stanzas });
+      } catch(e) { console.warn(e); alert('Eroare la salvare.'); }
+    }
+
     async function refreshLocalVideos() {
       const box = document.getElementById('localVideos');
       box.innerHTML = 'Se citește folderul...';
