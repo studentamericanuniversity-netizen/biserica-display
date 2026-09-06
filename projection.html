@@ -10,50 +10,48 @@
       overflow: hidden; color: #ffffff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex; flex-direction: column; background: #0b0d12;
-      transition: background .4s ease;
     }
+    /* Un singur fundal, pe tot ecranul (cantare/biblie/start) */
     body.bg-neutru-inchis { background: radial-gradient(ellipse at 50% 40%, #1c2230 0%, #0b0d12 75%); }
     body.bg-albastru       { background: radial-gradient(ellipse at 50% 40%, #14324d 0%, #071019 75%); }
     body.bg-gri            { background: linear-gradient(160deg, #23272e 0%, #101216 100%); }
+    body.bg-negru          { background: #000; }
     body.bg-imagine {
-      background-image: linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.65)),url('https://images.unsplash.com/photo-1519817650390-64a93db51149?q=80&w=1920&auto=format&fit=crop');
+      background-image: linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.55)),url('https://images.unsplash.com/photo-1519817650390-64a93db51149?q=80&w=1920&auto=format&fit=crop');
       background-size: cover; background-position: center;
     }
-    body.bg-negru { background:#000; }
-    body.bg-custom { background:#000 no-repeat center center / cover; }
+    body.bg-custom { background: #000 no-repeat center center / cover; }
     .blackout { background:#000 !important; }
     .blackout #rootContent, .blackout #mediaPlayer { display:none !important; }
 
     #rootContent { flex:1; display:flex; flex-direction:column; justify-content:space-between; min-height:0; }
-    .top-header { padding:18px 32px; display:flex; justify-content:flex-end; }
+
+    /* Ceas: fara chip, "in interiorul" fundalului, armonizat */
+    .top-header { padding: 22px 34px 0 34px; display:flex; justify-content:flex-end; }
     #clock {
-      font-size: 96px; font-weight: 800; color:#ffffff; line-height:1;
-      background: rgba(8,10,16,0.35); padding: 8px 22px; border-radius: 14px;
-      text-shadow: 0 6px 24px rgba(0,0,0,0.8); font-variant-numeric: tabular-nums;
+      font-size: 84px; font-weight: 800; color:#ffffff; line-height:1;
+      text-shadow: 0 4px 26px rgba(0,0,0,0.85); font-variant-numeric: tabular-nums;
     }
 
     .content-area { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;
-      padding:8px 80px 24px; text-align:center; min-height:0; overflow:hidden; }
-    .content-area.with-panel {
-      background: linear-gradient(165deg, rgba(16,20,30,0.68), rgba(6,9,15,0.52));
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 28px; padding: 30px 60px;
-      max-width: 90%; align-self: center; margin: 0 auto;
-      box-shadow: 0 18px 70px rgba(0,0,0,0.5); backdrop-filter: blur(7px);
+      padding: 6px 4vw 8px 4vw; text-align:center; min-height:0; overflow:hidden; width:100%; }
+    .content-area.welcome-left { justify-content:center; align-items:flex-start; text-align:left; padding: 12vh 6vw 4vh 8vw; }
+    #slideText {
+      max-width: 96%; font-weight: 700; line-height: 1.32;
+      white-space: pre-line;
+      text-shadow: 0 5px 30px rgba(0,0,0,0.95), 0 2px 8px rgba(0,0,0,0.9);
     }
-    .content-area.welcome-left { justify-content: flex-start; align-items: flex-start; text-align: left; padding: 10vh 5vw 4vh 7vw; }
-    #slideTitle { font-size:44px; font-weight:800; color:#f4c542; margin-bottom:22px; }
-    #slideText { font-size:52px; font-weight:600; line-height:1.45; white-space:pre-line; max-width:94%; text-shadow:0 4px 18px rgba(0,0,0,.9); }
-    #slideText .ch-header { display:block; font-size:.62em; font-weight:800; color:#f4c542; margin:.35em 0 .5em; }
-    #slideText .line { display:block; margin:.16em 0; }
-    #slideText .sub { display:block; margin:.1em 0 .1em 1.6em; font-size:.86em; color:#d7deea; }
-    #slideText .bullet { display:flex; gap:.5em; align-items:flex-start; text-align:left; margin:.22em 0; }
-    #slideText .bullet::before { content:"•"; color:#f4c542; font-weight:900; }
-    #slideText .bullet.sub { margin-left:1.7em; }
-    #slideText .bullet.sub::before { content:"–"; color:#9fb4d6; }
+    #slideText .ch-header { display:block; font-weight:900; color:#f4c542; }
+    #slideText .line { display:block; margin:.06em 0; }
+    #slideText .sub { display:block; margin:.04em 0 .04em 1.4em; font-size:.82em; opacity:.9; }
+    #slideText .bullet { display:flex; gap:.45em; align-items:flex-start; text-align:left; }
+    #slideText .bullet::before { content:"•"; font-weight:900; }
+    #slideText .bullet.sub { margin-left:1.6em; }
+    #slideText .bullet.sub::before { content:"–"; }
 
-    #footerMessage { padding:8px 40px 22px; text-align:center; font-size:24px; color:#dfe6f2; text-shadow:0 2px 10px rgba(0,0,0,.9); }
-    #footerMessage .verse-ref { display:block; margin-top:4px; font-size:.8em; color:#f4c542; font-weight:700; }
+    #footerMessage { padding: 4px 40px 26px; text-align:center; font-size:22px; opacity:.92;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.95); }
+    #footerMessage .verse-ref { display:block; margin-top:2px; font-size:.85em; font-weight:700; color:#f4c542; }
 
     #mediaPlayer { position:fixed; inset:0; display:none; background:#000; z-index:30; }
     #mediaPlayer.visible { display:block; }
@@ -63,8 +61,8 @@
 <body id="displayRoot" class="bg-neutru-inchis">
 
   <div id="rootContent">
-    <div class="top-header"><div id="clock">00:00:00</div></div>
-    <div class="content-area" id="contentArea"><div id="slideTitle"></div><div id="slideText"></div></div>
+    <div class="top-header"><div id="clock">--:--</div></div>
+    <div class="content-area" id="contentArea"><div id="slideText"></div></div>
     <div id="footerMessage"></div>
   </div>
 
@@ -78,20 +76,17 @@
     let ytPlayer = null;
     let localVid = null;
     let mode = 'plain';
+    let lastTextData = null;
 
     setInterval(() => {
-      const now = new Date();
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mm = String(now.getMinutes()).padStart(2, '0');
+      const n = new Date();
+      const hh = String(n.getHours()).padStart(2, '0');
+      const mm = String(n.getMinutes()).padStart(2, '0');
       document.getElementById('clock').innerText = hh + ':' + mm;
     }, 1000);
-    document.getElementById('clock').innerText = '--:--';
 
-    function baseFontSize(m) { return m === 'welcome' ? 66 : (m === 'notice' ? 54 : 50); }
-    function applyTextSize() {
-      const el = document.getElementById('slideText');
-      el.style.fontSize = Math.round(baseFontSize(mode) * fontScale) + 'px';
-    }
+    function baseFontSize(m) { return m === 'welcome' ? 88 : (m === 'notice' ? 66 : 56); }
+
     function setBackground(cls) {
       curBg = cls || 'bg-neutru-inchis';
       const root = document.getElementById('displayRoot');
@@ -105,7 +100,26 @@
       root.style.backgroundImage = 'url("' + dataUrl + '")';
     }
 
-    // ---- Player YouTube (controlabil din panou) ----
+    // ---------- fundal YouTube / video local ----------
+    function hideMedia() {
+      const media = document.getElementById('mediaPlayer');
+      media.classList.remove('visible');
+      if (ytPlayer) { try { ytPlayer.stopVideo(); } catch(e){} ytPlayer = null; }
+      if (localVid) { try { localVid.pause(); } catch(e){} localVid = null; }
+      media.innerHTML = '<div id="ytHolder"></div>';
+    }
+    function stopAny() {
+      if (ytPlayer) { try { ytPlayer.stopVideo(); } catch(e){} ytPlayer = null; }
+      if (localVid) { try { localVid.pause(); } catch(e){} localVid = null; }
+    }
+    function playLocal(src) {
+      stopAny();
+      const media = document.getElementById('mediaPlayer');
+      media.innerHTML = '<video id="localVid" src="' + src + '" autoplay controls style="width:100%;height:100%;object-fit:contain;background:#000;"></video>';
+      media.classList.add('visible');
+      localVid = document.getElementById('localVid');
+      localVid.onerror = () => { media.classList.remove('visible'); media.innerHTML = '<div id="ytHolder"></div>'; localVid = null; };
+    }
     function ensureYtApi() {
       return new Promise((resolve) => {
         if (window.YT && YT.Player) { resolve(); return; }
@@ -115,9 +129,7 @@
         tag.src = 'https://www.youtube.com/iframe_api';
         document.head.appendChild(tag);
         function waitReady() {
-          const iv = setInterval(() => {
-            if (window.YT && YT.Player) { clearInterval(iv); ytApiReady = true; resolve(); }
-          }, 200);
+          const iv = setInterval(() => { if (window.YT && YT.Player) { clearInterval(iv); resolve(); } }, 200);
           setTimeout(() => clearInterval(iv), 20000);
         }
         waitReady();
@@ -133,56 +145,29 @@
       ytPlayer = new YT.Player('ytHolder', {
         videoId: id,
         playerVars: { autoplay: 1, rel: 0, controls: 1, modestbranding: 1, playsinline: 1 },
-        events: {
-          onError: () => { /* ignoram erorile de retea */ }
-        }
+        events: { onError: () => {} }
       });
     }
-    function hideMedia() {
-      const media = document.getElementById('mediaPlayer');
-      media.classList.remove('visible');
-      if (ytPlayer) { try { ytPlayer.stopVideo(); ytPlayer = null; } catch(e){} }
-      if (localVid) { try { localVid.pause(); } catch(e){} localVid = null; }
-      media.innerHTML = '<div id="ytHolder"></div>';
-    }
-    function stopLocalOnly() {
-      if (localVid) { try { localVid.pause(); } catch(e){} localVid = null; }
-    }
-    function playLocal(src) {
-      stopLocalOnly();
-      if (ytPlayer) { try { ytPlayer.stopVideo(); ytPlayer = null; } catch(e){} }
-      const media = document.getElementById('mediaPlayer');
-      media.innerHTML = '<video id="localVid" src="' + src + '" autoplay controls style="width:100%;height:100%;object-fit:contain;background:#000;"></video>';
-      media.classList.add('visible');
-      localVid = document.getElementById('localVid');
-      localVid.onerror = () => { media.classList.remove('visible'); media.innerHTML = '<div id="ytHolder"></div>'; localVid = null; };
-    }
-    function stopAny() {
-      if (ytPlayer) { try { ytPlayer.stopVideo(); } catch(e){} ytPlayer = null; }
-      if (localVid) { try { localVid.pause(); } catch(e){} localVid = null; }
-    }
     function ytCommand(cmd) {
-      // comanda se aplica la ce ruleaza acum: video local descarcat sau YouTube
       if (localVid && localVid.duration !== undefined) {
         try {
           if (cmd === 'toggle') { if (localVid.paused) localVid.play(); else localVid.pause(); }
           else if (cmd === 'stop') hideMedia();
           else if (cmd === 'vol-up') localVid.volume = Math.min(1, (localVid.volume || 0.8) + 0.1);
           else if (cmd === 'vol-down') localVid.volume = Math.max(0, (localVid.volume || 0.8) - 0.1);
-        } catch (e) { console.warn('localcmd', e); }
+        } catch (e) {}
         return;
       }
       if (!ytPlayer || !ytPlayer.getPlayerState) return;
       try {
-        if (cmd === 'toggle') {
-          const st = ytPlayer.getPlayerState();
-          if (st === 1) ytPlayer.pauseVideo(); else ytPlayer.playVideo();
-        } else if (cmd === 'stop') { hideMedia(); }
-        else if (cmd === 'vol-up') { ytPlayer.setVolume(Math.min(100, (ytPlayer.getVolume() || 50) + 10)); }
-        else if (cmd === 'vol-down') { ytPlayer.setVolume(Math.max(0, (ytPlayer.getVolume() || 50) - 10)); }
-      } catch (e) { console.warn('ytcmd', e); }
+        if (cmd === 'toggle') { if (ytPlayer.getPlayerState() === 1) ytPlayer.pauseVideo(); else ytPlayer.playVideo(); }
+        else if (cmd === 'stop') hideMedia();
+        else if (cmd === 'vol-up') ytPlayer.setVolume(Math.min(100, (ytPlayer.getVolume() || 50) + 10));
+        else if (cmd === 'vol-down') ytPlayer.setVolume(Math.max(0, (ytPlayer.getVolume() || 50) - 10));
+      } catch (e) {}
     }
 
+    // ---------- text ----------
     function buildRichText(container, rawText) {
       container.innerHTML = '';
       const lines = String(rawText || '').split('\n');
@@ -205,65 +190,82 @@
       }
     }
 
+    // Auto-dimensionare: textul umple ecranul de proiectie, fara sa iasa
+    function fitText() {
+      const area = document.getElementById('contentArea');
+      const el = document.getElementById('slideText');
+      if (!area || !el) return;
+      const availH = Math.max(80, area.clientHeight - 24);
+      const startF = Math.max(14, Math.round(baseFontSize(mode) * fontScale * 0.45));
+      const maxF = Math.round(baseFontSize(mode) * fontScale * 2.1);
+      el.style.fontSize = startF + 'px';
+      let cur = startF;
+      // creste treptat cat timp incape
+      while (cur < maxF && el.scrollHeight <= availH) {
+        cur += 6;
+        el.style.fontSize = cur + 'px';
+      }
+      // daca a depasit, scadem pana incape
+      while (el.scrollHeight > availH && cur > 16) {
+        cur -= 2;
+        el.style.fontSize = cur + 'px';
+      }
+    }
+
+    function renderText(data) {
+      lastTextData = data;
+      mode = data.mode || 'plain';
+      const area = document.getElementById('contentArea');
+      const textEl = document.getElementById('slideText');
+      const footerEl = document.getElementById('footerMessage');
+
+      area.className = 'content-area' + (mode === 'welcome' ? ' welcome-left' : '');
+      textEl.style.color = data.textColor || '#ffffff';
+      textEl.style.textAlign = (data.align === 'left' ? 'left' : data.align === 'right' ? 'right' : 'center');
+      buildRichText(textEl, data.text || '');
+
+      // referinta / nota in partea de jos (fara titlu "Strofa X" pe ecran)
+      if (data.footer || data.footerRef) {
+        footerEl.innerHTML = '';
+        if (data.footer) { const ft = document.createElement('span'); ft.innerText = data.footer; footerEl.appendChild(ft); }
+        if (data.footerRef) {
+          const r = document.createElement('span'); r.className = 'verse-ref'; r.innerText = data.footerRef;
+          footerEl.appendChild(r);
+        }
+      } else { footerEl.innerHTML = ''; }
+
+      fitText();
+      if (data.bgClass) setBackground(data.bgClass);
+    }
+
     ipcRenderer.on('render-slide', (event, data) => {
       if (!data) return;
       const root = document.getElementById('displayRoot');
       const media = document.getElementById('mediaPlayer');
-      const titleEl = document.getElementById('slideTitle');
-      const textEl = document.getElementById('slideText');
-      const footerEl = document.getElementById('footerMessage');
 
       if (data.kind === 'black' || data.blackout) { root.classList.add('blackout'); return; }
       root.classList.remove('blackout');
 
       if (data.kind === 'bg') {
-        if (data.image) setBackgroundImage(data.image);
-        else setBackground(data.bgClass);
+        if (data.image) setBackgroundImage(data.image); else setBackground(data.bgClass);
         return;
       }
       if (data.kind === 'font') {
-        fontScale = Math.max(0.6, Math.min(2.2, fontScale + (data.delta || 0)));
-        applyTextSize(); return;
+        fontScale = Math.max(0.5, Math.min(3, fontScale + (data.delta || 0)));
+        if (lastTextData) { renderText(lastTextData); } else { fitText(); }
+        return;
       }
       if (data.kind === 'ytcmd') { ytCommand(data.cmd); return; }
-
       if (data.kind === 'yt' && data.videoId) { playYoutube(data.videoId); return; }
-
       if (data.kind === 'local' && data.src) { playLocal(data.src); return; }
-
       if (data.kind === 'image' && data.image) {
         stopAny();
         media.innerHTML = '<img src="' + data.image + '" alt="">';
         media.classList.add('visible'); return;
       }
-      if (data.kind === 'clear' || data.mediaType === 'none') {
-        hideMedia();
-      }
+      if (data.kind === 'clear' || data.mediaType === 'none') { hideMedia(); }
 
-      // slide text
-      titleEl.innerText = data.title || '';
-      titleEl.style.color = data.titleColor || '#f4c542';
-      titleEl.style.display = (data.title || '').trim() ? 'block' : 'none';
-
-      mode = data.mode || 'plain';
-      const contentArea = document.getElementById('contentArea');
-      contentArea.className = 'content-area'
-        + (mode === 'plain' ? ' with-panel' : '')
-        + (mode === 'welcome' ? ' welcome-left' : '');
-      textEl.className = '';
-      textEl.style.color = data.textColor || '#ffffff';
-      textEl.style.textAlign = data.align === 'left' ? 'left' : (data.align === 'right' ? 'right' : 'center');
-      textEl.style.alignSelf = data.align === 'left' ? 'flex-start' : (data.align === 'right' ? 'flex-end' : 'center');
-      buildRichText(textEl, data.text || '');
-      applyTextSize();
-
-      if (data.footer) {
-        footerEl.innerHTML = '';
-        const ft = document.createElement('span'); ft.innerText = data.footer; footerEl.appendChild(ft);
-        if (data.footerRef) { const r = document.createElement('span'); r.className = 'verse-ref'; r.innerText = data.footerRef; footerEl.appendChild(r); }
-      } else { footerEl.innerHTML = ''; }
-
-      if (data.bgClass) setBackground(data.bgClass);
+      renderText(data);
     });
   </script>
 </body>

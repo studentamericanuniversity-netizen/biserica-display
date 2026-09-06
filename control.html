@@ -189,6 +189,7 @@ text normal pe o linie..."></textarea>
         <button class="btn-p" style="flex:1;" onclick="triggerDownload('video')">Video MP4</button>
       </div>
       <button class="btn-m" style="width:100%;" onclick="openDownloadsFolder()">Deschide folderul</button>
+      <button class="btn-m" style="width:100%; margin-top:6px;" onclick="rcOnline()" title="Deschide Proiectia Online de pe Resurse Crestine pe ecranul mare">🌐 Proiecție online (Resurse Creștine)</button>
       <div class="progress-container" style="width:100%; background:#0f1115; border-radius:6px; height:14px; margin-top:8px; display:none;" id="progressContainer">
         <div class="progress-bar" style="width:0%; height:100%; background:var(--ok);" id="progressBar"></div>
       </div>
@@ -289,8 +290,10 @@ text normal pe o linie..."></textarea>
     function projectNavItem() {
       const it = nav.items[nav.idx];
       if (!it) return;
-      sendPayload({ kind:'slide', title: it.label || nav.baseTitle, text: it.text, mode: it.mode || 'plain', align: 'center', footer: it.footer || '', footerRef: it.footerRef || '' });
-      document.getElementById('displayTitle').value = it.label || nav.baseTitle;
+      const label = it.label || '';
+      const ref = it.ref || (/\d+:\d+/.test(label) ? label : '');
+      sendPayload({ kind:'slide', text: it.text, mode: 'plain', align: 'center', footerRef: ref });
+      document.getElementById('displayTitle').value = nav.baseTitle || '';
       document.getElementById('displayText').value = it.text;
       renderStanzaButtons();
     }
@@ -384,8 +387,7 @@ text normal pe o linie..."></textarea>
       document.getElementById('displayTitle').value = b + ' ' + c + ' (tot capitolul)';
       document.getElementById('displayText').value = fullText;
       sendPayload({ kind:'slide', title: b + ' ' + c, text: fullText, align:'left', footer: b+' '+c });
-    }
-    function makeNote(txt) { const d = document.createElement('div'); d.className='item-card'; d.style.color='#94a3b8'; d.style.fontSize='12px'; d.innerText = txt; return d; }
+    }    function makeNote(txt) { const d = document.createElement('div'); d.className='item-card'; d.style.color='#94a3b8'; d.style.fontSize='12px'; d.innerText = txt; return d; }
 
     // ================= CÂNTĂRI =================
     async function filterSongs() {
@@ -542,13 +544,15 @@ text normal pe o linie..."></textarea>
       const t = document.getElementById('annTitle').value;
       const x = document.getElementById('annText').value;
       const footer = document.getElementById('annFooter').value;
-      sendPayload(resolveBg(Object.assign({ kind:'slide', title:t, text:x, footer: footer||'' }, annOptions())));
+      const body = (t && t.trim()) ? '### ' + t + '\n\n' + x : x;
+      sendPayload(resolveBg(Object.assign({ kind:'slide', text: body, footer: footer || '' }, annOptions())));
       setNav(t || 'Anunț', [{ label: t || 'Anunț', text: x }], 0);
     }
     function projectEditor() {
       const t = document.getElementById('displayTitle').value;
       const x = document.getElementById('displayText').value;
-      sendPayload(resolveBg(Object.assign({ kind:'slide', title:t, text:x }, annOptions({ align:'center' }))));
+      const body = (t && t.trim()) ? '### ' + t + '\n\n' + x : x;
+      sendPayload(resolveBg(Object.assign({ kind:'slide', text: body }, annOptions({ align:'center' }))));
     }
     function blackoutScreen(){ sendPayload({ kind:'black' }); }
     function bgNow() {
@@ -649,6 +653,7 @@ text normal pe o linie..."></textarea>
       ipcRenderer.send('start-download-media', { url, formatType: fmt });
     }
     function openDownloadsFolder(){ ipcRenderer.send('open-downloads-folder'); }
+    function rcOnline(){ ipcRenderer.send('rc-online'); }
     ipcRenderer.on('download-status', (e, d) => {
       const pb = document.getElementById('progressBar'), st = document.getElementById('downloadStatus');
       st.innerText = d.message;
@@ -703,10 +708,10 @@ text normal pe o linie..."></textarea>
     }
     function showHome() {
       if (customBgData) sendPayload({ kind:'bg', image: customBgData });
-      sendPayload({ kind:'slide', title:'Betania Copșa Mică', mode:'welcome',
-        text:'Bine ați venit în Casa Domnului!\n\n„Noi propovăduim\npe Hristos cel răstignit."',
-        footer:'1 Corinteni 1:23',
-        titleColor:'#f4c542', textColor:'#ffffff', align:'left' });
+      sendPayload({ kind:'slide', mode:'welcome',
+        text:'Betania Copșa Mică\n\nBine ați venit în Casa Domnului!\n\n„Noi propovăduim\npe Hristos cel răstignit."',
+        footerRef:'1 Corinteni 1:23',
+        textColor:'#ffffff', align:'left' });
     }
     function togglePreview() { ipcRenderer.send('toggle-preview'); }
     // init

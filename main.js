@@ -7,6 +7,7 @@ const Database = require('better-sqlite3');
 let controlWindow = null;
 let projectionWindow = null;
 let previewWindow = null;
+let rcWindow = null;
 let songDb = null;
 
 // Trimite date catre fereastra de proiectie DOAR daca exista si nu a fost distrusa
@@ -290,6 +291,25 @@ function createWindows() {
 
   ipcMain.on('send-to-screen', (event, data) => {
     sendToProjection('render-slide', data);
+  });
+
+  // Fereastra "Proiectie online" de pe Resurse Crestine (pe ecranul de proiectie)
+  ipcMain.on('rc-online', () => {
+    if (rcWindow && !rcWindow.isDestroyed()) { rcWindow.close(); rcWindow = null; return; }
+    const disp = screen.getAllDisplays();
+    const target = disp.length > 1 ? disp[1] : disp[0];
+    rcWindow = new BrowserWindow({
+      x: target.bounds.x, y: target.bounds.y,
+      width: target.bounds.width, height: target.bounds.height,
+      fullscreen: true, frame: false,
+      icon: path.join(__dirname, 'build', 'icon.png'),
+      webPreferences: { nodeIntegration: false, contextIsolation: true }
+    });
+    rcWindow.loadURL('https://www.resursecrestine.ro/proiectie-online/');
+    rcWindow.webContents.on('before-input-event', (e, input) => {
+      if (input.type === 'keyDown' && input.key === 'Escape') { rcWindow.close(); }
+    });
+    rcWindow.on('closed', () => { rcWindow = null; });
   });
 
   // Fereastra mica de previzualizare (oglinda a ecranului de proiectie)
