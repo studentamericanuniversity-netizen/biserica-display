@@ -75,6 +75,7 @@
     let curBg = 'bg-neutru-inchis';
     let ytPlayer = null;
     let localVid = null;
+    let ytLastVol = 50;
     let mode = 'plain';
     let lastTextData = null;
 
@@ -96,8 +97,11 @@
     function setBackgroundImage(dataUrl) {
       curBg = 'custom';
       const root = document.getElementById('displayRoot');
-      root.className = 'bg-custom';
-      root.style.backgroundImage = 'url("' + dataUrl + '")';
+      root.className = '';
+      root.style.backgroundImage = 'linear-gradient(180deg, rgba(8,10,16,0.28), rgba(8,10,16,0.60)), url("' + dataUrl + '")';
+      root.style.backgroundSize = 'contain';
+      root.style.backgroundRepeat = 'no-repeat';
+      root.style.backgroundPosition = 'center center';
     }
 
     // ---------- fundal YouTube / video local ----------
@@ -153,8 +157,9 @@
         try {
           if (cmd === 'toggle') { if (localVid.paused) localVid.play(); else localVid.pause(); }
           else if (cmd === 'stop') hideMedia();
-          else if (cmd === 'vol-up') localVid.volume = Math.min(1, (localVid.volume || 0.8) + 0.1);
-          else if (cmd === 'vol-down') localVid.volume = Math.max(0, (localVid.volume || 0.8) - 0.1);
+          else if (cmd === 'mute') localVid.muted = !localVid.muted;
+          else if (cmd === 'vol-up') { localVid.muted = false; localVid.volume = Math.min(1, (localVid.volume || 0.8) + 0.1); }
+          else if (cmd === 'vol-down') { localVid.muted = false; localVid.volume = Math.max(0, (localVid.volume || 0.8) - 0.1); }
         } catch (e) {}
         return;
       }
@@ -162,8 +167,12 @@
       try {
         if (cmd === 'toggle') { if (ytPlayer.getPlayerState() === 1) ytPlayer.pauseVideo(); else ytPlayer.playVideo(); }
         else if (cmd === 'stop') hideMedia();
-        else if (cmd === 'vol-up') ytPlayer.setVolume(Math.min(100, (ytPlayer.getVolume() || 50) + 10));
-        else if (cmd === 'vol-down') ytPlayer.setVolume(Math.max(0, (ytPlayer.getVolume() || 50) - 10));
+        else if (cmd === 'mute') {
+          if (ytPlayer.isMuted()) { ytPlayer.unMute(); if (ytLastVol > 0) ytPlayer.setVolume(ytLastVol); }
+          else { ytLastVol = ytPlayer.getVolume() || 50; ytPlayer.mute(); }
+        }
+        else if (cmd === 'vol-up') { ytLastVol = Math.min(100, (ytPlayer.getVolume() || 50) + 10); ytPlayer.setVolume(ytLastVol); }
+        else if (cmd === 'vol-down') { ytLastVol = Math.max(0, (ytPlayer.getVolume() || 50) - 10); ytPlayer.setVolume(ytLastVol); }
       } catch (e) {}
     }
 
