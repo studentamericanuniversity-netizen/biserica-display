@@ -343,6 +343,11 @@ function createWindows() {
     previewWindow.on('closed', () => { previewWindow = null; });
   });
 
+  // Deschidere link extern (ex: marcelus.ro) din panou
+  ipcMain.on('open-external', (event, url) => {
+    if (url && /^https?:\/\//i.test(url)) shell.openExternal(url);
+  });
+
   ipcMain.on('open-downloads-folder', () => {
     const downloadDir = path.join(app.getPath('downloads'), 'Negative Biserica');
     if (!fs.existsSync(downloadDir)) fs.mkdirSync(downloadDir, { recursive: true });
