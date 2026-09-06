@@ -54,11 +54,10 @@
 
   <!-- ================= SIDEBAR ================= -->
   <div class="sidebar">
-    <div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:4px; padding:14px 10px; border-bottom:1px solid var(--border);">
-      <img id="appLogo" alt="Logo" style="width:100%; aspect-ratio:16/9; object-fit:fill; object-position:center; border-radius:12px;">
-      <div style="font-weight:800; font-size:18px;">Betania</div>
-      <div style="font-size:13px; color:var(--muted);">Copșa Mică</div>
-      <div style="font-size:11px; color:var(--muted);">Sistem Proiecție · v1.2.11</div>
+    <div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:5px; padding:14px 10px; border-bottom:1px solid var(--border);">
+      <img id="appLogo" alt="Logo" style="width:100%; aspect-ratio:16/9; object-fit:contain; border-radius:12px; background:radial-gradient(circle at center, #18202c 0%, #0b0d12 85%); border:1px solid #2e3440;">
+      <div style="font-weight:800; font-size:15px;">Biserica Betania — Copșa Mică</div>
+      <div style="font-size:11px; color:var(--muted);">Sistem Proiecție · v1.2.15</div>
       <div style="font-size:12px; color:var(--muted);">by
         <a href="#" onclick="openAuthor(); return false;" style="color:#60a5fa; font-weight:700; text-decoration:none; cursor:pointer;">Marcelus Ștefănescu</a>
       </div>
@@ -267,6 +266,11 @@ text normal pe o linie..."></textarea>
     <div id="cardEditor" style="background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; order:1;">
       <div class="sec-title" style="margin-top:0;">Editor proiecție activă</div>
       <div class="row" style="margin-bottom:8px;">
+        <select id="targetSel" style="margin-bottom:0;">
+          <option value="all">Proiectează pe: TOATE ecranele</option>
+        </select>
+      </div>
+      <div class="row" style="margin-bottom:8px;">
         <button class="btn-m" onclick="fontAdj(-1)" title="Mărire font">A−</button>
         <button class="btn-m" onclick="fontAdj(1)" title="Micșorare font">A+</button>
         <select id="quickBg" onchange="quickBgChange()" style="margin-bottom:0;">
@@ -338,7 +342,34 @@ text normal pe o linie..."></textarea>
       if (asc) asc.style.display = (id === 'tab-songs') ? 'block' : 'none';
     }
 
-    function sendPayload(p) { updatePreview(p); ipcRenderer.send('send-to-screen', p); }
+    function sendPayload(p) {
+      const t = currentTargets();
+      if (t && p) p.targetIds = t;
+      updatePreview(p);
+      ipcRenderer.send('send-to-screen', p);
+    }
+
+    // ---- Alegerea ecranului / ecranelor unde se proiecteaza ----
+    function currentTargets() {
+      const sel = document.getElementById('targetSel');
+      if (!sel || !sel.value || sel.value === 'all') return null;
+      const id = parseInt(sel.value, 10);
+      return Number.isFinite(id) ? [id] : null;
+    }
+    async function initTargets() {
+      try {
+        const list = await ipcRenderer.invoke('proj-targets');
+        const sel = document.getElementById('targetSel');
+        if (!sel || !list) return;
+        sel.innerHTML = '<option value="all">Proiectează pe: TOATE ecranele</option>';
+        list.forEach((t) => {
+          const o = document.createElement('option');
+          o.value = String(t.id);
+          o.textContent = 'DOAR pe ' + t.label;
+          sel.appendChild(o);
+        });
+      } catch(e) { console.warn('targets', e); }
+    }
 
     // ---------- Previzualizare in panel ----------
     let prevScale = 1;
@@ -964,6 +995,7 @@ text normal pe o linie..."></textarea>
     (function initUi() {
       const el = document.getElementById('appLogo');
       if (el) el.src = LOGO_INLINE;
+      initTargets();
       customBgData = loadAssetAsDataUrl(path.join('data','media','backgrounds','bis.png'));
       // dupa ce fereastra de proiectie e pregatita, aratam ecranul de bun-venit
       setTimeout(showHome, 1200);

@@ -6,6 +6,7 @@ const Database = require('better-sqlite3');
 
 let controlWindow = null;
 let projectionWindow = null;
+let projWindows = [];
 let previewWindow = null;
 let rcWindow = null;
 let songDb = null;
@@ -13,13 +14,18 @@ let songDb = null;
 // Trimite date catre fereastra de proiectie DOAR daca exista si nu a fost distrusa
 // (elimina eroarea clasica Electron: "Object has been destroyed")
 function sendToProjection(channel, data) {
-  const targets = [];
-  if (projectionWindow && !projectionWindow.isDestroyed()) targets.push(projectionWindow);
-  if (previewWindow && !previewWindow.isDestroyed()) targets.push(previewWindow);
-  for (const w of targets) {
-    try { w.webContents.send(channel, data); } catch (e) { console.error('send', e); }
+  const targets = (data && Array.isArray(data.targetIds) && data.targetIds.length) ? data.targetIds : null;
+  let sent = false;
+  for (const pw of projWindows) {
+    if (!pw.win || pw.win.isDestroyed()) continue;
+    if (targets && targets.indexOf(pw.id) === -1) continue;
+    try { pw.win.webContents.send(channel, data); sent = true; } catch (e) { console.error('send', e); }
   }
-  return targets.length > 0;
+  // previzualizarea oglindeste ce am trimis
+  if (previewWindow && !previewWindow.isDestroyed()) {
+    try { previewWindow.webContents.send(channel, data); } catch (e) {}
+  }
+  return sent;
 }
 
 // =========================================================
@@ -269,29 +275,42 @@ function createWindows() {
   });
   controlWindow.loadFile('control.html');
 
-  projectionWindow = new BrowserWindow({
-    x: externalDisplay.bounds.x,
-    y: externalDisplay.bounds.y,
-    width: externalDisplay.bounds.width,
-    height: externalDisplay.bounds.height,
-    fullscreen: multi,
-    frame: false,
-    alwaysOnTop: multi,
-    icon: path.join(__dirname, 'build', 'icon.png'),
-    webPreferences: { nodeIntegration: true, contextIsolation: false }
-  });
-  projectionWindow.loadFile('projection.html');
+  // 2. Ferestre de proiectie: pe FIECARE ecran suplimentar (sau una pe ecranul principal daca e singurul)
+  projWindows = [];
+  const range = multi ? displays.slice(1) : displays.slice(0, 1);
+  for (const disp of range) {
+    const w = new BrowserWindow({
+      x: disp.bounds.x,
+      y: disp.bounds.y,
+      width: disp.bounds.width,
+      height: disp.bounds.height,
+      fullscreen: multi,
+      frame: false,
+      alwaysOnTop: multi,
+      icon: path.join(__dirname, 'build', 'icon.png'),
+      webPreferences: { nodeIntegration: true, contextIsolation: false }
+    });
+    w.loadFile('projection.html');
+    projWindows.push({ id: projWindows.length, label: 'Afișaj ' + (disp.id + 1) + (disp.id === 0 ? ' (principal)' : ''), win: w });
+  }
+  projectionWindow = projWindows.length ? projWindows[0].win : null;
 
-  // Pe UN singur ecran: panoul ramane deasupra si focalizat, ca sa poti scrie.
-  // Fullscreen-ul proiectiei se activeaza cu F11 / butonul „⛶".
+  // Pe UN singur ecran: panoul ramane deasupra si focalizat (poti scrie).
   if (!multi) {
-    projectionWindow.setFullScreen(false);
+    if (projectionWindow) projectionWindow.setFullScreen(false);
     controlWindow.setAlwaysOnTop(true);
     controlWindow.show();
     controlWindow.focus();
   }
 
-  // F11 / comanda: porneste/opreste fullscreen-ul proiectiei
+  // Lista ecranelor de proiectie disponibile (pentru selectia din panou)
+  ipcMain.handle('proj-targets', () => {
+    return projWindows
+      .filter((p) => p.win && !p.win.isDestroyed())
+      .map((p) => ({ id: p.id, label: p.label }));
+  });
+
+  // F11 / comanda: porneste/opreste fullscreen-ul primei proiectii
   ipcMain.on('toggle-proj-fullscreen', () => {
     if (projectionWindow && !projectionWindow.isDestroyed()) {
       projectionWindow.setFullScreen(!projectionWindow.isFullScreen());
