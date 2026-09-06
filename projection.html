@@ -64,6 +64,11 @@
     #slideText .bullet.sub { margin-left:1.6em; }
     #slideText .bullet.sub::before { content:"–"; }
 
+    #slideRef {
+      display:none; color:#f4c542; font-weight:800; letter-spacing:.4px;
+      text-shadow: 0 4px 22px rgba(0,0,0,1), 0 2px 8px rgba(0,0,0,.9);
+      margin-bottom: 10px;
+    }
     #footerMessage { padding: 4px 40px 26px; text-align:center; font-size:22px; opacity:.92;
       text-shadow: 0 2px 12px rgba(0,0,0,0.95); }
     #footerMessage .verse-ref { display:block; margin-top:2px; font-size:.85em; font-weight:700; color:#f4c542; }
@@ -79,7 +84,10 @@
 
   <div id="rootContent">
     <div class="top-header"><div id="clock">--:--</div></div>
-    <div class="content-area" id="contentArea"><div id="slideText"></div></div>
+    <div class="content-area" id="contentArea">
+      <div id="slideRef"></div>
+      <div id="slideText"></div>
+    </div>
     <div id="footerMessage"></div>
   </div>
 
@@ -160,7 +168,17 @@
         waitReady();
       });
     }
+    let ytFallbackDone = false;
+    function tryYtFallback(id) {
+      if (ytFallbackDone) return;
+      ytFallbackDone = true;
+      if (ytPlayer) { try { ytPlayer.stopVideo(); } catch(e){} ytPlayer = null; }
+      const media = document.getElementById('mediaPlayer');
+      media.innerHTML = '<iframe src="https://www.youtube.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0&controls=1&modestbranding=1" allow="autoplay; encrypted-media" style="width:100%;height:100%;border:0"></iframe>';
+      media.classList.add('visible');
+    }
     async function playYoutube(id) {
+      ytFallbackDone = false;
       stopAny();
       await ensureYtApi();
       const media = document.getElementById('mediaPlayer');
@@ -170,7 +188,7 @@
       ytPlayer = new YT.Player('ytHolder', {
         videoId: id,
         playerVars: { autoplay: 1, rel: 0, controls: 1, modestbranding: 1, playsinline: 1 },
-        events: { onError: () => {} }
+        events: { onError: () => tryYtFallback(id) }
       });
     }
     function ytCommand(cmd) {
@@ -225,7 +243,9 @@
       const area = document.getElementById('contentArea');
       const el = document.getElementById('slideText');
       if (!area || !el) return;
-      const availH = Math.max(80, area.clientHeight - 24);
+      const refEl = document.getElementById('slideRef');
+      const refShown = refEl && refEl.style.display !== 'none';
+      const availH = Math.max(80, area.clientHeight - 24 - (refShown ? 90 : 0));
       const startF = Math.max(14, Math.round(baseFontSize(mode) * fontScale * 0.45));
       const maxF = Math.round(baseFontSize(mode) * fontScale * 2.1);
       el.style.fontSize = startF + 'px';
@@ -324,6 +344,16 @@
       if (veil) veil.classList.toggle('on', mode === 'plain' || mode === 'notice');
 
       area.className = 'content-area' + (mode === 'welcome' ? ' welcome-left' : '');
+      const refEl = document.getElementById('slideRef');
+      const hasTitle = data.title && String(data.title).trim() !== '';
+      if (hasTitle) {
+        refEl.style.display = 'block';
+        refEl.style.fontSize = Math.max(20, Math.round(baseFontSize(mode) * fontScale * 0.28)) + 'px';
+        refEl.innerText = data.title;
+      } else {
+        refEl.style.display = 'none';
+        refEl.innerText = '';
+      }
       textEl.style.color = data.textColor || '#ffffff';
       textEl.style.textAlign = (data.align === 'left' ? 'left' : data.align === 'right' ? 'right' : 'center');
       buildRichText(textEl, data.text || '');
