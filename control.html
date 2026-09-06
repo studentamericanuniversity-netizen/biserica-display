@@ -180,6 +180,7 @@ text normal pe o linie..."></textarea>
         <button class="btn-m" onclick="ytTransport('vol-down')">🔉 −</button>
         <button class="btn-m" onclick="ytTransport('vol-up')">🔊 +</button>
       </div>
+      <button class="btn-m" style="width:100%; margin-top:4px;" onclick="rcToggleCard()">🌐 Arată/ascunde panoul RC (doar opțiune)</button>
 
       <hr class="sep">
       <div class="sec-title">📁 Videoclipuri descărcate (local)</div>
@@ -249,8 +250,12 @@ text normal pe o linie..."></textarea>
       <div class="small" id="newSongStatusR" style="margin-top:6px;"></div>
     </div>
 
-    <div style="background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px;" id="rcCard">
-      <div class="sec-title" style="margin-top:0;">Proiecție online RC (în panou)</div>
+    <div style="background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; display:none;" id="rcCard">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="sec-title" style="margin:0;">🌐 Proiecție online RC (opțiune)</div>
+        <button class="btn-d" onclick="rcToggleCard(false)" style="padding:4px 10px;">✕ Ascunde</button>
+      </div>
+      <p class="small" style="margin-top:6px;">Doar o opțiune în plus — nu trebuie folosită. Pagina RC apare doar dacă apeși „Încarcă pagina".</p>
       <div class="row-ctl">
         <button class="btn-m" onclick="rcLoad()">Încarcă pagina</button>
         <button class="btn-ok" onclick="rcCapture()">📥 Proiectează textul din RC</button>
@@ -826,6 +831,13 @@ text normal pe o linie..."></textarea>
     }
     function openDownloadsFolder(){ ipcRenderer.send('open-downloads-folder'); }
     function rcOnline(){ ipcRenderer.send('rc-online'); }
+    function rcToggleCard(show) {
+      const card = document.getElementById('rcCard');
+      if (!card) return;
+      const want = (show === undefined) ? (card.style.display === 'none') : !!show;
+      card.style.display = want ? 'block' : 'none';
+      if (want) { const w = getRcWeb(); if (!w || !w.src || w.src === 'about:blank') rcLoad(); }
+    }
 
     // ---- RC Proiecție online în panou (webview) + captura strofei vizibile ----
     let rcAutoOn = false;
