@@ -51,6 +51,25 @@
     .duo-l .sub { display:block; margin-top:0.3em; font-size:.7em; font-weight:600; color:#ffffff; }
     .duo-r { max-width:46%; font-size:36px; font-weight:700; line-height:1.26; color:#ffffff; text-shadow:0 5px 26px rgba(0,0,0,1),0 2px 8px rgba(0,0,0,.95); }
     .duo-r .ref { display:block; margin-top:.45em; font-size:.6em; color:#f4c542; font-weight:800; }
+
+    /* Ecran Bun-Venit curat: fara casete, text direct pe imagine */
+    .content-area.welcome-clean { padding:0; position:relative; }
+    #welcomeContainer {
+      position:absolute; top:15%; left:0; width:100%; padding:0 5%;
+      display:flex; justify-content:space-between; align-items:flex-start;
+      background:transparent !important; border:none !important; box-shadow:none !important;
+      pointer-events:none;
+    }
+    #welcomeContainer .wl, #welcomeContainer .wr {
+      width:42%; background:none !important; border:none !important; box-shadow:none !important;
+      text-align:center;
+    }
+    .ws { text-shadow: 2px 2px 6px rgba(0,0,0,0.95), 0 0 12px rgba(0,0,0,0.9); }
+    .w-title { color:#ffd166; font-size:62px; font-weight:800; display:block; margin-bottom:6px; }
+    .w-sub   { color:#ffffff; font-size:44px; font-weight:600; display:block; }
+    .w-ref   { color:#ffd166; font-size:32px; font-weight:800; display:block; margin-top:10px; }
+    .w-quote { color:#ffffff; font-size:46px; font-weight:700; line-height:1.3; display:block; }
+
     #slideText {
       max-width: 96%; font-weight: 700; line-height: 1.32;
       white-space: pre-line;
@@ -327,12 +346,49 @@
       if (data.bgClass) setBackground(data.bgClass);
     }
 
+    function renderWelcome(data) {
+      lastTextData = data;
+      mode = 'welcome-duo';
+      const area = document.getElementById('contentArea');
+      const textEl = document.getElementById('slideText');
+      const footerEl = document.getElementById('footerMessage');
+      const veil = document.getElementById('veil');
+      if (veil) veil.classList.remove('on');
+      const tray = getDuoTray();
+      if (tray) tray.classList.add('hidden');
+      area.className = 'content-area welcome-clean';
+      textEl.style.display = 'none';
+      footerEl.innerHTML = '';
+      let cont = document.getElementById('welcomeContainer');
+      if (!cont) {
+        cont = document.createElement('div');
+        cont.id = 'welcomeContainer';
+        area.appendChild(cont);
+      }
+      cont.style.display = 'flex';
+      cont.innerHTML = '';
+      const wl = document.createElement('div'); wl.className = 'wl';
+      const wr = document.createElement('div'); wr.className = 'wr';
+      const mk = (cls, txt) => { const s = document.createElement('span'); s.className = 'ws ' + cls; s.innerText = txt; return s; };
+      wl.appendChild(mk('w-title', data.wTitle || 'Bine ați venit'));
+      wl.appendChild(mk('w-sub', data.wSub || 'în Casa Domnului!'));
+      wl.appendChild(mk('w-ref', data.wLeftRef || 'Ioan 1:1'));
+      wr.appendChild(mk('w-quote', data.wQuote || '„Noi propovăduim pe Hristos cel răstignit."'));
+      wr.appendChild(mk('w-ref', data.wRightRef || '1 Corinteni 1:23'));
+      cont.appendChild(wl);
+      cont.appendChild(wr);
+      if (data.bgClass) setBackground(data.bgClass);
+    }
+
     function renderText(data) {
       lastTextData = data;
       // ecranul de start in doua blocuri: stanga + dreapta
+      if (data.mode === 'welcome-duo') { renderWelcome(data); return; }
       if (data.mode === 'home-duo' || data.homeLeft) { renderHomeDuo(data); return; }
       const tray0 = getDuoTray();
       if (tray0) tray0.classList.add('hidden');
+      const wc0 = document.getElementById('welcomeContainer');
+      if (wc0) wc0.style.display = 'none';
       mode = data.mode || 'plain';
       const area = document.getElementById('contentArea');
       const textEl = document.getElementById('slideText');

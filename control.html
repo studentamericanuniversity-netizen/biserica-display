@@ -1001,11 +1001,9 @@ text normal pe o linie..."></textarea>
     }
     function showHome() {
       if (customBgData) sendPayload({ kind:'bg', image: customBgData });
-      sendPayload({ kind:'slide', mode:'home-duo',
-        homeLeft:'Bine ați venit\nîn Casa Domnului!',
-        homeRight:'„Noi propovăduim\npe Hristos cel răstignit."',
-        homeRef:'1 Corinteni 1:23',
-        textColor:'#ffffff' });
+      sendPayload({ kind:'slide', mode:'welcome-duo',
+        wTitle:'Bine ați venit', wSub:'în Casa Domnului!', wLeftRef:'Ioan 1:1',
+        wQuote:'„Noi propovăduim pe Hristos cel răstignit."', wRightRef:'1 Corinteni 1:23' });
     }
     function togglePreview() { ipcRenderer.send('toggle-preview'); }
     // init
