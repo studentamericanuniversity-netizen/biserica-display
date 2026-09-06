@@ -180,8 +180,6 @@ text normal pe o linie..."></textarea>
         <button class="btn-m" onclick="ytTransport('vol-down')">🔉 −</button>
         <button class="btn-m" onclick="ytTransport('vol-up')">🔊 +</button>
       </div>
-      <button class="btn-m" style="width:100%; margin-top:4px;" onclick="rcToggleCard()">🌐 Arată/ascunde panoul RC (doar opțiune)</button>
-
       <hr class="sep">
       <div class="sec-title">📁 Videoclipuri descărcate (local)</div>
       <button class="btn-m" style="width:100%;" onclick="refreshLocalVideos()">🔄 Arată lista descărcatelor</button>
@@ -196,7 +194,6 @@ text normal pe o linie..."></textarea>
         <button class="btn-p" style="flex:1;" onclick="triggerDownload('video')">Video MP4</button>
       </div>
       <button class="btn-m" style="width:100%;" onclick="openDownloadsFolder()">Deschide folderul</button>
-      <button class="btn-m" style="width:100%; margin-top:6px;" onclick="rcOnline()" title="Deschide Proiectia Online de pe Resurse Crestine pe ecranul mare">🌐 Proiecție online (Resurse Creștine)</button>
       <div class="progress-container" style="width:100%; background:#0f1115; border-radius:6px; height:14px; margin-top:8px; display:none;" id="progressContainer">
         <div class="progress-bar" style="width:0%; height:100%; background:var(--ok);" id="progressBar"></div>
       </div>
@@ -986,7 +983,7 @@ text normal pe o linie..."></textarea>
     function showHome() {
       if (customBgData) sendPayload({ kind:'bg', image: customBgData });
       sendPayload({ kind:'slide', mode:'home-duo',
-        homeLeft:'Betania Copșa Mică\nBine ați venit în Casa Domnului!',
+        homeLeft:'Bine ați venit\nîn Casa Domnului!',
         homeRight:'„Noi propovăduim\npe Hristos cel răstignit."',
         homeRef:'1 Corinteni 1:23',
         textColor:'#ffffff' });
