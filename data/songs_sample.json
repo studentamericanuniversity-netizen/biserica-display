@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "title": "Mărețul Har",
+    "author": "John Newton",
+    "stanzas": [
+      {
+        "type": "Strofa 1",
+        "text": "Măreţul har m-a mântuit\nPe mine, un păcătos!\nAm fost pierdut, dar m-a găsit,\nEram orb, dar văd glorios!"
+      },
+      {
+        "type": "Strofa 2",
+        "text": "Prin har am fost eliberat\nDe frica ce-o purtam;\nŞi cât de scump e harul dat\nÎn ceasul când credeam!"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Ce Mare Ești",
+    "author": "Carl Boberg",
+    "stanzas": [
+      {
+        "type": "Strofa 1",
+        "text": "O, Doamne-al meu, când privesc eu uimit\nÎntregul Univers creat de Tine,\nCând văd stelele, când tunetul măreţ\nÎmi spune de puterea Ta deplină..."
+      },
+      {
+        "type": "Refren",
+        "text": "Atunci îţi cânt, Măreţul meu Stăpân:\nCe mare eşti! Ce mare eşti!\nAtunci îţi cânt, Măreţul meu Stăpân:\nCe mare eşti! Ce mare eşti!"
+      }
+    ]
+  }
+]

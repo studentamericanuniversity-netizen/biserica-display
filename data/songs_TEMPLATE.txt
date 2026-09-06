@@ -1,0 +1,41 @@
+# =========================================================
+# SABLON CANTARI — completeaza cu cantecele bisericii tale
+# =========================================================
+# CUM FUNCTIOnEAZA:
+#   - fiecare cantare incepe cu o linie:   ### Titlu | Autor
+#   - fiecare strofa incepe cu o linie:    @Strofa 1  (sau @Refren, @Strofa 2, ...)
+#   - randurile de dupa '@' sunt textul strofei
+#   - o linie goala in interiorul unei strofe = rand liber (pauza)
+#   - dupa conversie, aplicatia foloseste data/songs.json
+#
+# CONVERTIRE (din folderul church-project):
+#   powershell -ExecutionPolicy Bypass -File tools/convert-songs.ps1
+#
+# Observatie: textul de mai jos (pana la prima linie "###") este ignorat.
+# Sterge cantecele demonstrative de mai jos si scrie-le pe ale tale
+# (sau pastreaza-le daca vrei sa ramana in aplicatie).
+# =========================================================
+
+### Mărețul Har | John Newton
+@Strofa 1
+Măreţul har m-a mântuit
+Pe mine, un păcătos!
+Am fost pierdut, dar m-a găsit,
+Eram orb, dar văd glorios!
+@Strofa 2
+Prin har am fost eliberat
+De frica ce-o purtam;
+Şi cât de scump e harul dat
+În ceasul când credeam!
+
+### Ce Mare Ești | Carl Boberg
+@Strofa 1
+O, Doamne-al meu, când privesc eu uimit
+Întregul Univers creat de Tine,
+Când văd stelele, când tunetul măreţ
+Îmi spune de puterea Ta deplină...
+@Refren
+Atunci îţi cânt, Măreţul meu Stăpân:
+Ce mare eşti! Ce mare eşti!
+Atunci îţi cânt, Măreţul meu Stăpân:
+Ce mare eşti! Ce mare eşti!

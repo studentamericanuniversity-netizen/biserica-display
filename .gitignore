@@ -1,0 +1,22 @@
+# Dependinte si build
+node_modules/
+dist/
+database/cantari.db
+tools/sqlite/
+tools/_tmp/
+
+# Arhive mari descarcate manual (nu se commit-uiesc)
+*.rar
+
+# Binare descarcate de GitHub Actions in bin/
+bin/*.exe
+
+# Sistem
+.DS_Store
+Thumbs.db
+*.log
+
+# ATENTIE: data/songs.json si data/bible.json TREBUIE commit-uite
+# (db:build le foloseste ca sursa in GitHub Actions).
+# Daca vrei arhiva completa (24.603), pune cantari_resurse_crestine.zip
+# in radacina proiectului si scoate-i ignorarea de mai jos daca exista.

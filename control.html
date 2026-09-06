@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Panou Operator Biserica</title>
+  <style>
+    :root {
+      --bg-dark: #12141a;
+      --panel-bg: #1c1f26;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --border: #2e3440;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+    .sidebar { width: 360px; background: var(--panel-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .main-workspace { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px; gap: 20px; }
+    
+    .nav-tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .nav-tab { flex: 1; padding: 14px; text-align: center; cursor: pointer; font-weight: bold; background: #181b22; color: var(--text-muted); }
+    .nav-tab.active { background: var(--panel-bg); color: #fff; border-bottom: 3px solid var(--accent); }
+
+    .tab-content { padding: 15px; flex: 1; overflow-y: auto; display: none; }
+    .tab-content.active { display: block; }
+
+    input, textarea, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #3b4252; background: #0f1115; color: #fff; margin-bottom: 10px; font-size: 14px; }
+    button { padding: 10px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-success { background: var(--success); color: white; }
+
+    .item-card { background: #262b36; padding: 10px; border-radius: 6px; margin-bottom: 8px; cursor: pointer; }
+    .item-card:hover { background: #323947; }
+    .item-title { font-weight: bold; color: #60a5fa; }
+
+    .section-box { background: var(--panel-bg); border-radius: 8px; padding: 18px; border: 1px solid var(--border); }
+    .section-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #cbd5e1; }
+    
+    .stanza-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; margin-top: 10px; }
+    .stanza-btn { background: #334155; color: white; font-size: 13px; text-align: center; padding: 10px 4px; border-radius: 4px; }
+    .stanza-btn:hover { background: var(--accent); }
+
+    .controls-row { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+
+    /* Progress bar descarcare */
+    .progress-container { width: 100%; background-color: #0f1115; border-radius: 6px; overflow: hidden; height: 16px; margin-top: 10px; display: none; }
+    .progress-bar { width: 0%; height: 100%; background-color: var(--success); transition: width 0.2s; }
+    .status-text { font-size: 13px; margin-top: 6px; color: var(--text-muted); min-height: 18px; }
+  </style>
+</head>
+<body>
+
+  <!-- BARA LATERALA -->
+  <div class="sidebar">
+    <div class="nav-tabs">
+      <div class="nav-tab active" onclick="switchTab('tab-bible', this)">Biblie</div>
+      <div class="nav-tab" onclick="switchTab('tab-songs', this)">Cântări</div>
+      <div class="nav-tab" onclick="switchTab('tab-yt', this)">YouTube</div>
+    </div>
+
+    <!-- TAB 1: BIBLIE -->
+    <div id="tab-bible" class="tab-content active">
+      <input type="text" id="bibleSearch" placeholder="Caută (ex: Ioan 3:16 sau cuvânt)..." oninput="filterBible()">
+      <div id="bibleResults"></div>
+    </div>
+
+    <!-- TAB 2: CANTARI -->
+    <div id="tab-songs" class="tab-content">
+      <input type="text" id="songSearch" placeholder="Caută titlu sau vers..." oninput="filterSongs()">
+      <div id="songsResults"></div>
+    </div>
+
+    <!-- TAB 3: YOUTUBE & NEGATIVE -->
+    <div id="tab-yt" class="tab-content">
+      <div class="section-title">Redare Fără Reclame</div>
+      <input type="text" id="ytVideoInput" placeholder="Link sau ID YouTube...">
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <button class="btn-primary" style="flex:1;" onclick="loadYoutube()">Video Ecran</button>
+        <button class="btn-primary" style="flex:1; background: #475569;" onclick="stopYoutube()">Oprește Media</button>
+      </div>
+
+      <hr style="border-color: var(--border); margin: 16px 0;">
+
+      <div class="section-title">Descărcare Negativ Offline</div>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Fișierele se salvează în folderul Downloads/Negative Biserica.</p>
+      
+      <button class="btn-success" style="width: 100%; margin-bottom: 8px;" onclick="triggerDownload('audio')">Descarcă Doar Audio (MP3)</button>
+      <button class="btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="triggerDownload('video')">Descarcă Video (MP4)</button>
+      <button style="width: 100%; background: #334155; color: #fff;" onclick="openDownloadsFolder()">Deschide Folderul de Negative</button>
+
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="status-text" id="downloadStatus"></div>
+    </div>
+  </div>
+
+  <!-- ZONA PRINCIPALA DE LUCRU -->
+  <div class="main-workspace">
+    <div class="section-box">
+      <div class="section-title">Panou de Proiecție Activă</div>
+      <input type="text" id="displayTitle" placeholder="Titlu (ex: Ioan 3:16 sau Titlu Cântare)">
+      <textarea id="displayText" rows="5" placeholder="Textul care va fi proiectat pe ecranul mare..."></textarea>
+      
+      <div id="stanzasContainer" class="stanza-grid"></div>
+
+      <div class="controls-row">
+        <button class="btn-primary" onclick="pushToScreen(false)">Proiectează pe Ecran</button>
+        <button class="btn-danger" onclick="pushBlackout()">Ecran Negru</button>
+        <button class="btn-primary" style="background: #475569;" onclick="pushBackgroundOnly()">Doar Fundalul</button>
+      </div>
+    </div>
+
+    <div class="section-box">
+      <div class="section-title">Alertă Urgență / Notificare Jos</div>
+      <div style="display: flex; gap: 10px;">
+        <input type="text" id="customMessage" placeholder="Ex: Mașina cu numărul B 00 ABC blochează parcarea..." style="margin-bottom:0;">
+        <button class="btn-primary" onclick="updateAlert()">Afișează Alertă</button>
+        <button class="btn-danger" onclick="clearAlert()">Șterge</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    const fs = require('fs');
+    const path = require('path');
+
+    let bibleData = [];
+    let songsData = [];
+    let songDbAvailable = false;
+    let searchSeq = 0;
+
+    function loadJsonFile(fileName) {
+      try {
+        return JSON.parse(fs.readFileSync(path.join(__dirname, 'data', fileName), 'utf8'));
+      } catch(e) {
+        console.warn("Nu am putut incarca data/" + fileName + ":", e);
+        return null;
+      }
+    }
+
+    // Se incearca mai intai fisierele complete, apoi esantioanele
+    bibleData = loadJsonFile('bible.json') || loadJsonFile('bible_sample.json') || [];
+    songsData = loadJsonFile('songs.json') || loadJsonFile('songs_sample.json') || [];
+
+    // Verifica daca exista baza SQLite cantari.db (generata de build_full_database.js)
+    (async function initSongDb() {
+      try {
+        const r = await ipcRenderer.invoke('songs-count');
+        if (r && r.db && r.count > 0) {
+          songDbAvailable = true;
+          const sb = document.getElementById('songSearch');
+          if (sb) sb.placeholder = 'Caută în ' + r.count.toLocaleString('ro-RO') + ' cântece (bază de date)...';
+          console.log('Baza de date cântece activă: ' + r.count);
+        }
+      } catch(e) {
+        console.warn('Baza de date indisponibila (folosesc JSON):', e);
+      }
+    })();
+
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      el.classList.add('active');
+    }
+
+    // Ignora diacriticele in cautare (titlurile din export nu au diacritice)
+    function fold(s) {
+      return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+    const MAX_RESULTS = 60;
+
+    // Filtrare Biblie
+    function filterBible() {
+      const q = fold(document.getElementById('bibleSearch').value).trim();
+      const res = document.getElementById('bibleResults');
+      res.innerHTML = '';
+      if(!q) return;
+
+      const matches = bibleData.filter(v => 
+        fold(`${v.book} ${v.chapter}:${v.verse}`).includes(q) ||
+        fold(v.text).includes(q)
+      );
+
+      matches.slice(0, MAX_RESULTS).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item-card';
+        div.innerHTML = `<div class="item-title">${item.book} ${item.chapter}:${item.verse}</div><div>${item.text}</div>`;
+        div.onclick = () => {
+          document.getElementById('displayTitle').value = `${item.book} ${item.chapter}:${item.verse}`;
+          document.getElementById('displayText').value = item.text;
+          document.getElementById('stanzasContainer').innerHTML = '';
+          pushToScreen(false);
+        };
+        res.appendChild(div);
+      });
+      if(matches.length > MAX_RESULTS) {
+        const info = document.createElement('div');
+        info.className = 'item-card';
+        info.style.color = '#94a3b8';
+        info.style.fontSize = '12px';
+        info.innerText = '... încă ' + (matches.length - MAX_RESULTS) + ' rezultate (rafinează căutarea)';
+        res.appendChild(info);
+      }
+    }
+
+    // Filtrare Cântări (baza de date SQLite daca exista, altfel JSON)
+    async function filterSongs() {
+      const q = fold(document.getElementById('songSearch').value).trim();
+      const res = document.getElementById('songsResults');
+      res.innerHTML = '';
+      if(!q) return;
+
+      if (songDbAvailable) {
+        const seq = ++searchSeq;
+        let r = null;
+        try {
+          r = await ipcRenderer.invoke('songs-search', q);
+        } catch(e) {
+          console.warn('Cautare in baza de date esuata:', e);
+          return;
+        }
+        if (seq !== searchSeq) return; // rezultat vechi, ignorat
+        const list = (r && r.songs) ? r.songs : [];
+        list.forEach(row => {
+          const div = document.createElement('div');
+          div.className = 'item-card';
+          div.innerHTML = `<div class="item-title">${row.title}</div><small>${row.author || ''}</small>`;
+          div.onclick = () => selectSongFromDb(row);
+          res.appendChild(div);
+        });
+        if (list.length === 0) {
+          const info = document.createElement('div');
+          info.className = 'item-card';
+          info.style.color = '#94a3b8';
+          info.style.fontSize = '13px';
+          info.innerText = 'Niciun rezultat.';
+          res.appendChild(info);
+        }
+        return;
+      }
+
+      const matches = songsData.filter(s => 
+        fold(s.title).includes(q) || 
+        fold(s.author || '').includes(q) ||
+        s.stanzas.some(st => fold(st.text).includes(q))
+      );
+
+      matches.slice(0, MAX_RESULTS).forEach(song => {
+        const div = document.createElement('div');
+        div.className = 'item-card';
+        div.innerHTML = `<div class="item-title">${song.title}</div><small>${song.author || ''}</small>`;
+        div.onclick = () => selectSong(song);
+        res.appendChild(div);
+      });
+      if(matches.length > MAX_RESULTS) {
+        const info = document.createElement('div');
+        info.className = 'item-card';
+        info.style.color = '#94a3b8';
+        info.style.fontSize = '12px';
+        info.innerText = '... încă ' + (matches.length - MAX_RESULTS) + ' rezultate (rafinează căutarea)';
+        res.appendChild(info);
+      }
+    }
+
+    function selectSong(song) {
+      document.getElementById('displayTitle').value = song.title;
+      const container = document.getElementById('stanzasContainer');
+      container.innerHTML = '';
+
+      song.stanzas.forEach((stanza) => {
+        const btn = document.createElement('button');
+        btn.className = 'stanza-btn';
+        btn.innerText = stanza.type;
+        btn.onclick = () => {
+          document.getElementById('displayText').value = stanza.text;
+          pushToScreen(false);
+        };
+        container.appendChild(btn);
+      });
+
+      if(song.stanzas.length > 0) {
+        document.getElementById('displayText').value = song.stanzas[0].text;
+      }
+    }
+
+    // Incarca detaliile unui cantec din baza de date (dupa ID)
+    async function selectSongFromDb(row) {
+      try {
+        const full = await ipcRenderer.invoke('songs-get', row.id);
+        if (!full) {
+          alert('Cântecul nu a fost găsit în baza de date.');
+          return;
+        }
+        selectSong({ title: full.title, author: full.author || '', stanzas: full.stanzas || [] });
+      } catch(e) {
+        console.warn(e);
+        alert('Eroare la încărcarea cântecului din baza de date.');
+      }
+    }
+
+    function pushToScreen(clearOnly) {
+      ipcRenderer.send('send-to-screen', {
+        blackout: false,
+        title: clearOnly ? '' : document.getElementById('displayTitle').value,
+        text: clearOnly ? '' : document.getElementById('displayText').value,
+        alert: document.getElementById('customMessage').value,
+        mediaType: 'none'
+      });
+    }
+
+    function pushBlackout() {
+      ipcRenderer.send('send-to-screen', { blackout: true });
+    }
+
+    function pushBackgroundOnly() {
+      pushToScreen(true);
+    }
+
+    function updateAlert() {
+      ipcRenderer.send('send-to-screen', {
+        updateAlertOnly: true,
+        alert: document.getElementById('customMessage').value
+      });
+    }
+
+    function clearAlert() {
+      document.getElementById('customMessage').value = '';
+      updateAlert();
+    }
+
+    function extractVideoId(urlOrId) {
+      let id = urlOrId.trim();
+      if(id.includes('v=')) {
+        id = id.split('v=')[1].split('&')[0];
+      } else if(id.includes('youtu.be/')) {
+        id = id.split('youtu.be/')[1].split('?')[0];
+      }
+      return id;
+    }
+
+    function loadYoutube() {
+      const raw = document.getElementById('ytVideoInput').value;
+      const id = extractVideoId(raw);
+      if(!id) return alert('Introduceți un link sau ID valid de YouTube');
+      ipcRenderer.send('send-to-screen', {
+        mediaType: 'youtube',
+        videoId: id
+      });
+    }
+
+    function stopYoutube() {
+      ipcRenderer.send('send-to-screen', {
+        mediaType: 'none'
+      });
+    }
+
+    function triggerDownload(formatType) {
+      const url = document.getElementById('ytVideoInput').value.trim();
+      if(!url) return alert('Introduceți link-ul clipului YouTube de descărcat!');
+
+      const pContainer = document.getElementById('progressContainer');
+      const pBar = document.getElementById('progressBar');
+      const statusText = document.getElementById('downloadStatus');
+
+      pContainer.style.display = 'block';
+      pBar.style.width = '0%';
+      statusText.innerText = 'Pornire proces...';
+
+      ipcRenderer.send('start-download-media', { url, formatType });
+    }
+
+    function openDownloadsFolder() {
+      ipcRenderer.send('open-downloads-folder');
+    }
+
+    ipcRenderer.on('download-status', (event, data) => {
+      const pBar = document.getElementById('progressBar');
+      const statusText = document.getElementById('downloadStatus');
+
+      statusText.innerText = data.message;
+
+      if(data.status === 'progress' && data.progress !== undefined) {
+        pBar.style.width = `${data.progress}%`;
+      } else if(data.status === 'completed') {
+        pBar.style.width = '100%';
+        setTimeout(() => {
+          document.getElementById('progressContainer').style.display = 'none';
+        }, 3000);
+      } else if(data.status === 'error') {
+        pBar.style.width = '0%';
+      }
+    });
+  </script>
+</body>
+</html>

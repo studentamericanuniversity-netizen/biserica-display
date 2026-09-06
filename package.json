@@ -1,0 +1,50 @@
+{
+  "name": "biserica-proiectie",
+  "version": "1.0.0",
+  "description": "Aplicatie completa de proiectie si multimedia pentru biserica",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable",
+    "db:build": "node scripts/build_full_database.js",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "better-sqlite3": "^11.10.0"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "ro.biserica.proiectie",
+    "productName": "BisericaProiectie",
+    "win": {
+      "target": "portable"
+    },
+    "extraResources": [
+      {
+        "from": "bin/",
+        "to": "bin/",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "database/",
+        "to": "database/",
+        "filter": ["*.db"]
+      }
+    ],
+    "files": [
+      "**/*",
+      "!bin/*",
+      "!database/*",
+      "!data/songs.json",
+      "!tools/**",
+      "!scripts/**",
+      "!*.zip",
+      "!*.rar",
+      "!node_modules/*/{CHANGELOG.md,README.md,README,test}"
+    ]
+  }
+}

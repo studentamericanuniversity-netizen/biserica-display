@@ -1,0 +1,49 @@
+name: Build Windows Executable
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout cod sursa
+        uses: actions/checkout@v4
+
+      - name: Creare director binari
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path bin
+
+      - name: Descarcare yt-dlp si FFmpeg
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" -OutFile "bin/yt-dlp.exe"
+          Invoke-WebRequest -Uri "https://github.com/GyanD/codexffmpeg/releases/download/7.1/ffmpeg-7.1-essentials_build.zip" -OutFile "ffmpeg.zip"
+          Expand-Archive -Path "ffmpeg.zip" -DestinationPath "ffmpeg_extracted"
+          $ffmpegExe = Get-ChildItem -Path "ffmpeg_extracted" -Filter "ffmpeg.exe" -Recurse | Select-Object -First 1
+          Copy-Item -Path $ffmpegExe.FullName -Destination "bin/ffmpeg.exe"
+          Remove-Item -Path "ffmpeg.zip", "ffmpeg_extracted" -Recurse -Force
+
+      - name: Setare Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalare Dependente
+        run: npm install
+
+      - name: Generare baza de date cantece (cantari.db)
+        shell: pwsh
+        run: npm run db:build
+
+      - name: Compilare Executabil Windows
+        run: npm run dist
+
+      - name: Incarcare Executabil Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: BisericaProiectie-Exe
+          path: dist/*.exe

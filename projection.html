@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Proiecție Display</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: #000;
+      background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.55)), url('https://images.unsplash.com/photo-1519817650390-64a93db51149?q=80&w=1920&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      color: #ffffff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: background 0.3s ease;
+    }
+
+    .blackout { background: #000000 !important; }
+    .blackout * { display: none !important; }
+
+    /* Ceas Digital */
+    .top-header {
+      padding: 24px 40px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    #clock {
+      font-size: 26px;
+      font-weight: 600;
+      color: #f1f5f9;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 6px 16px;
+      border-radius: 8px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    /* Zona Centrală pentru Text */
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 0 100px;
+      text-align: center;
+      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.95);
+    }
+    #slideTitle {
+      font-size: 38px;
+      font-weight: 700;
+      color: #facc15;
+      margin-bottom: 24px;
+      letter-spacing: 0.5px;
+    }
+    #slideText {
+      font-size: 54px;
+      font-weight: 600;
+      line-height: 1.35;
+      white-space: pre-line;
+    }
+
+    /* Container Media YouTube */
+    #mediaPlayer {
+      position: absolute;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      display: none;
+      background: black;
+      z-index: 10;
+    }
+    #mediaPlayer iframe {
+      width: 100%; height: 100%; border: none;
+    }
+
+    /* Notificare / Mesaj Urgent Jos */
+    #alertBanner {
+      background: rgba(220, 38, 38, 0.92);
+      color: #ffffff;
+      font-size: 28px;
+      font-weight: 700;
+      text-align: center;
+      padding: 14px 20px;
+      backdrop-filter: blur(6px);
+      display: none;
+      animation: slideUp 0.4s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+  </style>
+</head>
+<body id="displayRoot">
+
+  <div class="top-header">
+    <div id="clock">00:00:00</div>
+  </div>
+
+  <div class="content-area">
+    <div id="slideTitle"></div>
+    <div id="slideText"></div>
+  </div>
+
+  <div id="mediaPlayer"></div>
+  <div id="alertBanner"></div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    // Actualizare Ceas Timp Real
+    setInterval(() => {
+      const now = new Date();
+      document.getElementById('clock').innerText = now.toLocaleTimeString('ro-RO');
+    }, 1000);
+
+    // Receptor Evenimente Proiecție
+    ipcRenderer.on('render-slide', (event, data) => {
+      const root = document.getElementById('displayRoot');
+      const mediaBox = document.getElementById('mediaPlayer');
+      const alertBox = document.getElementById('alertBanner');
+
+      if (data.blackout) {
+        root.classList.add('blackout');
+        mediaBox.innerHTML = '';
+        mediaBox.style.display = 'none';
+        return;
+      }
+      root.classList.remove('blackout');
+
+      if (data.updateAlertOnly) {
+        if (data.alert && data.alert.trim() !== '') {
+          alertBox.innerText = data.alert;
+          alertBox.style.display = 'block';
+        } else {
+          alertBox.style.display = 'none';
+        }
+        return;
+      }
+
+      // Gestionare Media YouTube
+      if (data.mediaType === 'youtube' && data.videoId) {
+        // Redare embed fără controale și fără reclame directe
+        mediaBox.innerHTML = `
+          <iframe 
+            src="https://www.youtube-nocookie.com/embed/${data.videoId}?autoplay=1&controls=0&rel=0&modestbranding=1" 
+            allow="autoplay; encrypted-media">
+          </iframe>
+        `;
+        mediaBox.style.display = 'block';
+        return;
+      } else {
+        mediaBox.innerHTML = '';
+        mediaBox.style.display = 'none';
+      }
+
+      // Rulare text
+      document.getElementById('slideTitle').innerText = data.title || '';
+      document.getElementById('slideText').innerText = data.text || '';
+
+      if (data.alert && data.alert.trim() !== '') {
+        alertBox.innerText = data.alert;
+        alertBox.style.display = 'block';
+      } else {
+        alertBox.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
